@@ -15,13 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.monocept.myapp.dto.AgentRequestDto;
 import com.monocept.myapp.dto.AgentResponseDto;
-import com.monocept.myapp.dto.CustomerRequestDto;
 import com.monocept.myapp.dto.EmployeeRequestDto;
 import com.monocept.myapp.dto.EmployeeResponseDto;
 import com.monocept.myapp.dto.InsuranceSettingResponseDto;
 import com.monocept.myapp.dto.TaxSettingResponseDto;
 import com.monocept.myapp.service.AgentManagementService;
-import com.monocept.myapp.service.CustomerManagementService;
 import com.monocept.myapp.service.EmployeeManagementService;
 import com.monocept.myapp.service.SettingService;
 import com.monocept.myapp.util.PagedResponse;
@@ -40,14 +38,7 @@ public class SharedResourcesController {
 	@Autowired
 	private SettingService settingService;
 	
-	@Autowired
-	private CustomerManagementService customerManagementService;
 	
-	@PreAuthorize("isAuthenticated()")
-	@PostMapping("/customers")
-	public ResponseEntity<String> createCustomer(@RequestBody CustomerRequestDto customerRequestDto){
-		return new ResponseEntity<String>(customerManagementService.createCustomer(customerRequestDto),HttpStatus.CREATED);
-	}
 
 	@PutMapping("/employees")
 	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
