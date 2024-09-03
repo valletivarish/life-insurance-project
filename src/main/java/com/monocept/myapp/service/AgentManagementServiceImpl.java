@@ -87,7 +87,6 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 		List<City> cities = state.getCity();
 		City city = cities.stream().filter(c -> c.getCityId() == agentRequestDto.getCityId()).findFirst().orElse(null);
 		address.setCity(city);
-		agent.setAddress(address);
 
 		address.setHouseNo(agentRequestDto.getHouseNo());
 		address.setPincode(agentRequestDto.getPincode());

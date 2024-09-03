@@ -15,6 +15,8 @@ public class CustomerRequestDto {
 	private LocalDate dateOfBirth;
 
 	private String phoneNumber;
+	
+	private boolean active;
 
 	private String username;
 	private String email;

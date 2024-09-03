@@ -13,6 +13,7 @@ public class CustomerResponseDto {
 	private LocalDate dateOfBirth;
 
 	private String phoneNumber;
+	
 
 	private String username;
 	private String email;
