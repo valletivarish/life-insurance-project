@@ -22,6 +22,7 @@ import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.State;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException.UserNotFoundException;
 import com.monocept.myapp.repository.AddressRepository;
 import com.monocept.myapp.repository.AgentRepository;
 import com.monocept.myapp.repository.CityRepository;
@@ -51,6 +52,7 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 	@Autowired
 	private CityRepository cityRepository;
 	
+<<<<<<< HEAD
 	@Autowired
 	private RoleRepository roleRepository;
 
@@ -63,6 +65,23 @@ public class AgentManagementServiceImpl implements AgentManagementService {
         if (userRepository.existsByEmail(agentRequestDto.getEmail())) {
             throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Email already exists!");
         }
+=======
+	
+	@Autowired
+	private RoleRepository roleRepository;
+
+
+	@Override
+	public String createAgent(AgentRequestDto agentRequestDto) {
+
+		if (userRepository.existsByUsername(agentRequestDto.getUsername())) {
+			throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Username already exists!");
+		}
+
+		if (userRepository.existsByEmail(agentRequestDto.getEmail())) {
+			throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Email already exists!");
+		}
+>>>>>>> 5a943960109660767deb682f984be959c9f159ff
 		Agent agent = new Agent();
 		User user = new User();
 		user.setEmail(agentRequestDto.getEmail());
@@ -92,6 +111,10 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 		agent.setAgentId(agentRequestDto.getAgentId());
 		agent.setFirstName(agentRequestDto.getFirstName());
 		agent.setLastName(agentRequestDto.getLastName());
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5a943960109660767deb682f984be959c9f159ff
 		agent.setUser(user);
 		agentRepository.save(agent);
 
@@ -114,6 +137,8 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 
 	private AgentResponseDto convertAgentToAgentResponseDto(Agent agent) {
 		AgentResponseDto agentResponseDto = new AgentResponseDto();
+		agentResponseDto.setFirstName(agent.getFirstName());
+		agentResponseDto.setLastName(agent.getLastName());
 		agentResponseDto.setAgentId(agent.getAgentId());
 		Address address = agent.getAddress();
 		User user = agent.getUser();
@@ -162,8 +187,15 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 	}
 
 	@Override
+	public AgentResponseDto getAgentById(long agentId) {
+		Agent agent = agentRepository.findById(agentId).orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Agent Not found"));
+		return convertAgentToAgentResponseDto(agent);
+	}
+
+	@Override
 	public String deleteAgent(long id) {
-		Agent agent = agentRepository.findById(id).orElseThrow(()->new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Agent Not found"));
+		Agent agent = agentRepository.findById(id)
+				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Agent Not found"));
 		agent.setActive(false);
 		agentRepository.save(agent);
 		return "Agent deleted Successfully";

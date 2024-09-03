@@ -14,4 +14,8 @@ public interface AgentManagementService {
 
 	String deleteAgent(long id);
 
+	AgentResponseDto getAgentById(long agentId);
+
+	
+
 }

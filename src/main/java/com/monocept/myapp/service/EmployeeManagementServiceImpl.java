@@ -2,6 +2,7 @@ package com.monocept.myapp.service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.monocept.myapp.dto.AgentResponseDto;
 import com.monocept.myapp.dto.EmployeeRequestDto;
 import com.monocept.myapp.dto.EmployeeResponseDto;
 import com.monocept.myapp.entity.Employee;
@@ -53,9 +55,9 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 		user.setPassword(passwordEncoder.encode(employeeRequestDto.getPassword()));
 
 		Set<Role> roles = new HashSet<>();
-		String roleName="ROLE_EMPLOYEE";
-		Role role = roleRepository.findByName(roleName)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Role not found: " + roleName));
+		String roleName = "ROLE_EMPLOYEE";
+		Role role = roleRepository.findByName(roleName).orElseThrow(
+				() -> new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Role not found: " + roleName));
 		roles.add(role);
 
 		user.setRoles(roles);
@@ -88,7 +90,9 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 		employeeResponseDto.setUsername(employee.getUser().getUsername());
 		employeeResponseDto.setUserId(employee.getUser().getUserId());
 		employeeResponseDto.setEmployeeId(employee.getEmployeeId());
-		employeeResponseDto.setName(employee.getFirstName());
+		employeeResponseDto.setFirstName(employee.getFirstName());
+		employeeResponseDto.setLastName(employee.getLastName());
+		employeeResponseDto.setEmail(employee.getUser().getEmail());
 		employeeResponseDto.setStatus(employee.isActive());
 
 		return employeeResponseDto;
@@ -112,13 +116,22 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 
 	@Override
 	public String deactivateEmployee(long employeeId) {
-		Employee employee = employeeRepository.findById(employeeId).orElseThrow(()->new GuardianLifeAssuranceApiException(HttpStatus.OK, "Employee Not found"));
-		if(!employee.isActive()) {
+		Employee employee = employeeRepository.findById(employeeId)
+				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.OK, "Employee Not found"));
+		if (!employee.isActive()) {
 			throw new GuardianLifeAssuranceApiException(HttpStatus.CONFLICT, "Employee is already deleted");
 		}
 		employee.setActive(false);
 		employeeRepository.save(employee);
 		return "Employee Deleted Successfully";
+	}
+
+	@Override
+	public EmployeeResponseDto getemployeesIdById(long employeesId) {
+		Employee employee = employeeRepository.findById(employeesId)
+				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.OK, "Employee Not found"));
+
+		return convertEmployeeToEmployeeResponseDto(employee);
 	}
 
 }
