@@ -10,6 +10,6 @@ public interface AgentManagementService {
 
 	PagedResponse<AgentResponseDto> getAllAgents(int page, int size, String sortBy, String direction);
 
-	String updateAgent(AgentResponseDto agentResponseDto);
+	String updateAgent(AgentRequestDto agentRequestDto);
 
 }

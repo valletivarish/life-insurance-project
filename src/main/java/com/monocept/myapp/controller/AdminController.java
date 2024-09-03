@@ -170,8 +170,8 @@ public class AdminController {
 		return new ResponseEntity<PagedResponse<AgentResponseDto>>(agentManagementService.getAllAgents(page,size,sortBy,direction),HttpStatus.OK);
 	}
 	@PutMapping("/agents")
-	public ResponseEntity<String> updateAgent(@RequestBody AgentResponseDto agentResponseDto) {		
-		return new ResponseEntity<String>(agentManagementService.updateAgent(agentResponseDto),HttpStatus.OK);
+	public ResponseEntity<String> updateAgent(@RequestBody AgentRequestDto agentRequestDto) {		
+		return new ResponseEntity<String>(agentManagementService.updateAgent(agentRequestDto),HttpStatus.OK);
 	}
 	
 	

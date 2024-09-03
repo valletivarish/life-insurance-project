@@ -19,6 +19,7 @@ import com.monocept.myapp.entity.State;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.repository.AddressRepository;
 import com.monocept.myapp.repository.AgentRepository;
+import com.monocept.myapp.repository.CityRepository;
 import com.monocept.myapp.repository.StateRepository;
 import com.monocept.myapp.repository.UserRepository;
 import com.monocept.myapp.util.PagedResponse;
@@ -40,6 +41,9 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 
 	@Autowired
 	private StateRepository stateRepository;
+
+	@Autowired
+	private CityRepository cityRepository;
 
 	@Override
 	public String createAgent(AgentRequestDto agentRequestDto) {
@@ -102,11 +106,33 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 	}
 
 	@Override
-	public String updateAgent(AgentResponseDto agentResponseDto) {
-		Agent existingAgent = agentRepository.findById(agentResponseDto.getAgentId()).orElseThrow(
-				() -> new IllegalArgumentException("Agent not found with ID: " + agentResponseDto.getAgentId()));
+	public String updateAgent(AgentRequestDto agentRequestDto) {
+		Agent existingAgent = agentRepository.findById(agentRequestDto.getAgentId()).orElseThrow(
+				() -> new IllegalArgumentException("Agent not found with ID: " + agentRequestDto.getAgentId()));
 
-		return null;
+		existingAgent.setFirstName(agentRequestDto.getFirstName());
+		existingAgent.setLastName(agentRequestDto.getLastName());
+
+		Address existingAddress = existingAgent.getAddress();
+		existingAddress.setApartment(agentRequestDto.getApartment());
+		existingAddress.setHouseNo(agentRequestDto.getHouseNo());
+		existingAddress.setPincode(agentRequestDto.getPincode());
+		City city = cityRepository.findById(agentRequestDto.getCityId()).orElse(null);
+		City newCity = addressRepository.findByCity(city);
+		existingAddress.setCity(newCity);
+
+		addressRepository.save(existingAddress);
+
+		User existingUser = existingAgent.getUser();
+		existingUser.setUsername(agentRequestDto.getUsername());
+		existingUser.setEmail(agentRequestDto.getEmail());
+
+		userRepository.save(existingUser);
+
+		agentRepository.save(existingAgent);
+
+		return "Agent updated successfully";
+
 	}
 
 }
