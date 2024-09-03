@@ -36,7 +36,7 @@ public class Agent {
 	private Address address;
 
 	@Column
-	private boolean active = false;
+	private boolean active = true;
 
 	@Column
 	private double totalCommission = 0.0;

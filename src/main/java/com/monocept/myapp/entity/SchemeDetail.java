@@ -1,18 +1,11 @@
 package com.monocept.myapp.entity;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -33,7 +26,8 @@ public class SchemeDetail {
     private byte[] schemeImage;
 
     @NotEmpty(message = "Description is required")
-    @Column(name = "description")
+    @Lob 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @PositiveOrZero(message = "Minimum amount must be a non-negative number")
@@ -72,7 +66,4 @@ public class SchemeDetail {
     @Column(name = "installmentCommRatio")
     private Double installmentCommRatio;
 
-    @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REFRESH})
-    @JoinTable(name = "schemeDetail_document", joinColumns = @JoinColumn(name = "detailId"), inverseJoinColumns = @JoinColumn(name = "documentId"))
-    private Set<SchemeDocument> documents = new HashSet<>();
 }
