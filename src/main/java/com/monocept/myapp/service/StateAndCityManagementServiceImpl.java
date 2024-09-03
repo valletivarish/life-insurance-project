@@ -16,7 +16,7 @@ import com.monocept.myapp.dto.StateRequestDto;
 import com.monocept.myapp.dto.StateResponseDto;
 import com.monocept.myapp.entity.City;
 import com.monocept.myapp.entity.State;
-import com.monocept.myapp.exception.StudentApiException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.repository.CityRepository;
 import com.monocept.myapp.repository.StateRepository;
 import com.monocept.myapp.util.PagedResponse;
@@ -119,10 +119,10 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 	@Override
 	public CityResponseDto createCity(long stateId, CityRequestDto cityRequestDto) {
 		State state = stateRepository.findById(stateId)
-				.orElseThrow(() -> new StudentApiException(HttpStatus.NOT_FOUND, "State not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "State not found"));
 		City city = convertCityRequestDtoToCity(cityRequestDto);
 		if(!state.isActive()) {
-			throw new StudentApiException(HttpStatus.NOT_FOUND, "state is not active");
+			throw new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "state is not active");
 		}
 		city.setState(state);
 		City createdCity = cityRepository.save(city);
@@ -141,7 +141,7 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 	@Override
 	public List<CityResponseDto> getAllCitiesByStateId(long stateId) {
 		State state = stateRepository.findById(stateId)
-				.orElseThrow(() -> new StudentApiException(HttpStatus.NOT_FOUND, "state not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "state not found"));
 		List<CityResponseDto> cities = state.getCity().stream().map(c -> convertCityToCityResponseDto(c))
 				.collect(Collectors.toList());
 
@@ -151,9 +151,9 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 	@Override
 	public CityResponseDto updateCity(Long stateId, CityRequestDto cityRequestDto) {
 		State state = stateRepository.findById(stateId)
-				.orElseThrow(() -> new StudentApiException(HttpStatus.NOT_FOUND, "State not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "State not found"));
 		City existingCity = cityRepository.findById(cityRequestDto.getId())
-				.orElseThrow(() -> new StudentApiException(HttpStatus.NOT_FOUND, "City is not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "City is not found"));
 		if (cityRequestDto.getName() != null && cityRequestDto.getName() != "") {
 			existingCity.setName(cityRequestDto.getName());
 		}
@@ -166,9 +166,9 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 	@Override
 	public String deactivateCity(Long cityId) {
 		City existingCity = cityRepository.findById(cityId)
-				.orElseThrow(() -> new StudentApiException(HttpStatus.NOT_FOUND, "City not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "City not found"));
 		if (!existingCity.isActive()) {
-			throw new StudentApiException(HttpStatus.CONFLICT, "City is already deleted");
+			throw new GuardianLifeAssuranceApiException(HttpStatus.CONFLICT, "City is already deleted");
 		}
 		existingCity.setActive(false);
 		cityRepository.save(existingCity);
@@ -178,7 +178,7 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 	@Override
 	public CityResponseDto getCityById(Long cityId) {
 		City city = cityRepository.findById(cityId)
-				.orElseThrow(() -> new StudentApiException(HttpStatus.NOT_FOUND, "city not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "city not found"));
 		CityResponseDto responseDto = convertCityToCityResponseDto(city);
 		responseDto.setCity(city.getState().getName());
 		return responseDto;
