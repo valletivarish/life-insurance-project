@@ -39,12 +39,14 @@ public class CommonController {
 	}
 
 	@GetMapping("/employees/{employeesId}")
+	@Operation(summary = "get employee by id", description = "")
 	public ResponseEntity<EmployeeResponseDto> getemployeesIdById(@PathVariable long employeesId) {
 		return new ResponseEntity<EmployeeResponseDto>(employeeManagementService.getemployeesIdById(employeesId),
 				HttpStatus.OK);
 	}
 
 	@GetMapping("/agents")
+	@Operation(summary = "get all agents", description = "")
 	public ResponseEntity<PagedResponse<AgentResponseDto>> getAllAgents(
 			@RequestParam(name = "page", defaultValue = "0") int page,
 			@RequestParam(name = "size", defaultValue = "5") int size,
@@ -55,16 +57,19 @@ public class CommonController {
 	}
 
 	@PostMapping("/agents")
+	@Operation(summary = "create agent", description = "creating agent")
 	public ResponseEntity<String> createAgent(@RequestBody AgentRequestDto agentRequestDto) {
 		return new ResponseEntity<String>(agentManagementService.createAgent(agentRequestDto), HttpStatus.CREATED);
 	}
-
+	
 	@GetMapping("/agents/{agentId}")
+	@Operation(summary = "get  agent by id", description = " agent")
 	public ResponseEntity<AgentResponseDto> getAgentById(@PathVariable long agentId) {
 		return new ResponseEntity<AgentResponseDto>(agentManagementService.getAgentById(agentId), HttpStatus.OK);
 	}
 
 	@PutMapping("/agents")
+	@Operation(summary = "update agent", description = " agent")
 	public ResponseEntity<String> updateAgent(@RequestBody AgentRequestDto agentRequestDto) {
 		return new ResponseEntity<String>(agentManagementService.updateAgent(agentRequestDto), HttpStatus.OK);
 	}
