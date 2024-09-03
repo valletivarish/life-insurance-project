@@ -18,7 +18,7 @@ public class SubmittedDocument {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "documentId")
-    private Long documentId;
+    private Long documentId; 
 
     @Column(name = "documentName")
     private String documentName;
