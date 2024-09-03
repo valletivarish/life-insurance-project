@@ -101,12 +101,39 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 	}
 
 	@Override
-	public String updateAgent(AgentResponseDto agentResponseDto) {
-		Agent existingAgent = agentRepository.findById(agentResponseDto.getAgentId())
-	            .orElseThrow(() -> new IllegalArgumentException("Agent not found with ID: " + agentResponseDto.getAgentId()));
-		
-		
-		return null;
+	public String updateAgent(AgentRequestDto agentRequestDto) {
+	    // Find the existing agent by ID
+	    Agent existingAgent = agentRepository.findById(agentRequestDto.getAgentId())
+	            .orElseThrow(() -> new IllegalArgumentException("Agent not found with ID: " + agentRequestDto.getAgentId()));
+
+	    // Update the agent's basic details
+	    existingAgent.setFirstName(agentRequestDto.getFirstName());
+	    existingAgent.setLastName(agentRequestDto.getLastName());
+
+	    // Update the address details
+	    Address existingAddress = existingAgent.getAddress();
+	    existingAddress.setApartment(agentRequestDto.getApartment());
+	    existingAddress.setHouseNo(agentRequestDto.getHouseNo());
+	    existingAddress.setPincode(agentRequestDto.getPincode());
+
+	    City newCity = addressRepository.findById(agentRequestDto.getCityId())
+	            .orElseThrow(() -> new IllegalArgumentException("City not found with ID: " + agentRequestDto.getCityId()));
+	    existingAddress.setCity(newCity);
+
+	    addressRepository.save(existingAddress);
+
+	    User existingUser = existingAgent.getUser();
+	    existingUser.setUsername(agentRequestDto.getUsername());
+	    existingUser.setEmail(agentRequestDto.getEmail());
+
+	    // Save the updated user details
+	    userRepository.save(existingUser);
+
+	    // Save the updated agent
+	    agentRepository.save(existingAgent);
+
+	    return "Agent updated successfully";
 	}
+
 
 }
