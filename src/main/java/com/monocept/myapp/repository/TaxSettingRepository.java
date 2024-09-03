@@ -6,4 +6,6 @@ import com.monocept.myapp.entity.TaxSetting;
 
 public interface TaxSettingRepository extends JpaRepository<TaxSetting, Long> {
 
+	TaxSetting findTopByOrderByUpdatedAtDesc();
+
 }

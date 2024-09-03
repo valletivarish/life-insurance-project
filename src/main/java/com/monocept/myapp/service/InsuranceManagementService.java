@@ -1,12 +1,14 @@
 package com.monocept.myapp.service;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
 import com.monocept.myapp.dto.InsurancePlanRequestDto;
 import com.monocept.myapp.dto.InsurancePlanResponseDto;
 import com.monocept.myapp.dto.InsuranceSchemeRequestDto;
+import com.monocept.myapp.dto.InsuranceSchemeResponseDto;
 import com.monocept.myapp.util.PagedResponse;
 
 public interface InsuranceManagementService {
@@ -22,6 +24,15 @@ public interface InsuranceManagementService {
 	String createInsuranceScheme(long insurancePlanId, MultipartFile multipartFile,
 			InsuranceSchemeRequestDto requestDto) throws IOException;
 
-	PagedResponse<InsurancePlanResponseDto> getAllInsuranceSchemes(long insurancePlanId);
+	List<InsuranceSchemeResponseDto> getAllInsuranceSchemes(long insurancePlanId);
+
+	String updateInsuranceScheme(long insurancePlanId, MultipartFile multipartFile,
+			InsuranceSchemeRequestDto requestDto) throws IOException;
+
+	String deleteInsuranceScheme(long insurancePlanId, long insuranceSchemeId);
+
+	InsuranceSchemeResponseDto getInsuranceById(long insurancePlanId, long insuranceSchemeId);
+
+
 
 }
