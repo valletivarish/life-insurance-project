@@ -41,7 +41,7 @@ public class Customer {
     private List<Query> queries;
 
     @Column
-    private boolean active = true;
+    private boolean active = false;
     
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "addressId")
