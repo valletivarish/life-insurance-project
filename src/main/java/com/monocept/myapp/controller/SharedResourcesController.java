@@ -18,8 +18,11 @@ import com.monocept.myapp.dto.AgentResponseDto;
 import com.monocept.myapp.dto.EmployeeRequestDto;
 import com.monocept.myapp.dto.EmployeeResponseDto;
 import com.monocept.myapp.dto.InsuranceSettingResponseDto;
+import com.monocept.myapp.dto.QueryReplyDto;
+import com.monocept.myapp.dto.QueryResponseDto;
 import com.monocept.myapp.dto.TaxSettingResponseDto;
 import com.monocept.myapp.service.AgentManagementService;
+import com.monocept.myapp.service.CustomerManagementService;
 import com.monocept.myapp.service.EmployeeManagementService;
 import com.monocept.myapp.service.SettingService;
 import com.monocept.myapp.util.PagedResponse;
@@ -37,6 +40,9 @@ public class SharedResourcesController {
 
 	@Autowired
 	private SettingService settingService;
+	
+	@Autowired
+	private CustomerManagementService customerManagementService;
 
 	@PutMapping("/employees")
 	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
@@ -98,16 +104,26 @@ public class SharedResourcesController {
 	public ResponseEntity<TaxSettingResponseDto> getTaxSetting() {
 		return new ResponseEntity<TaxSettingResponseDto>(settingService.getTaxSetting(), HttpStatus.OK);
 	}
-	
-	
+
 	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
-    @PostMapping("/customer/{documentId}/verify/{employeeId}")
-    public ResponseEntity<String> verifyDocument(
-            @PathVariable int documentId,
-            @PathVariable long employeeId) {
-        
-        String response = employeeManagementService.verifyDocument(documentId, employeeId);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+	@PostMapping("/customer/{documentId}/verify/{employeeId}")
+	public ResponseEntity<String> verifyDocument(@PathVariable(name = "documentId") int documentId,
+			@PathVariable(name = "employeeId") long employeeId) {
+
+		String response = employeeManagementService.verifyDocument(documentId, employeeId);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	@PreAuthorize("hasRole('EMPLOYEE')")
+	@GetMapping("/customer/queries")
+	public ResponseEntity<PagedResponse<QueryResponseDto>> getAllQueries(@RequestParam(name = "page",defaultValue = "5")int page,@RequestParam(name = "size",defaultValue = "5")int size,@RequestParam(name = "sortBy",defaultValue = "queryId")String sortBy,@RequestParam(name = "direction",defaultValue = "asc")String direction){
+		return new ResponseEntity<PagedResponse<QueryResponseDto>>(customerManagementService.getAllQueries(page,size,sortBy,direction),HttpStatus.OK);
+	}
 	
+	@PreAuthorize("hasRole('EMPLOYEE')")
+	@PostMapping("/customer/queries/{queryId}/respond")
+	public ResponseEntity<String> respondToQuery(@PathVariable(name = "queryId") long queryId, @RequestBody QueryReplyDto queryReplyDto) {
+		String response = customerManagementService.respondToQuery(queryId,queryReplyDto);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 }

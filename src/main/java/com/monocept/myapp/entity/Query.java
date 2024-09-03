@@ -10,9 +10,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.Data;
 
 @Entity
 @Table(name = "query")
+@Data
 public class Query {
 
     @Id
@@ -28,7 +30,7 @@ public class Query {
     @Column(name = "message")
     private String message;
 
-    @Column(name = "response")
+    @Column(length = 65535, columnDefinition = "TEXT")
     private String response;
 
     @Column(name = "isResolved")
