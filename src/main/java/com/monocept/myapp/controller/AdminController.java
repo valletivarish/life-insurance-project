@@ -183,17 +183,17 @@ public class AdminController {
 	}
 	@PostMapping("/insurance-types")
 	@Operation(summary = "Create a new insurance type", description = "Add a new insurance type to the system")
-	public ResponseEntity<String> createInsuranceType(@RequestBody InsurancePlanRequestDto insurancePlanRequestDto){
+	public ResponseEntity<String> createInsurancePlan(@RequestBody InsurancePlanRequestDto insurancePlanRequestDto){
 		return new ResponseEntity<String>(insuranceManagementService.createInsurancePlan(insurancePlanRequestDto),HttpStatus.CREATED);
 	}
 	@PutMapping("/insurance-types")
 	@Operation(summary = "Update insurance type details", description = "Update the details of an existing insurance type")
-	public ResponseEntity<String> updateInsuranceType(@RequestBody InsurancePlanRequestDto insurancePlanRequestDto){
+	public ResponseEntity<String> updateInsurancePlan(@RequestBody InsurancePlanRequestDto insurancePlanRequestDto){
 		return new ResponseEntity<String>(insuranceManagementService.updateInsurancePlan(insurancePlanRequestDto),HttpStatus.OK);
 	}
 	@GetMapping("/insurance-types")
 	@Operation(summary = "Get all insurance types", description = "Retrieve a paginated list of all insurance types")
-	public ResponseEntity<PagedResponse<InsurancePlanResponseDto>> getAllInsuranceTypes(
+	public ResponseEntity<PagedResponse<InsurancePlanResponseDto>> getAllInsurancePlans(
 			@RequestParam(name = "page", defaultValue = "0") int page,
 			@RequestParam(name = "size", defaultValue = "5") int size,
 			@RequestParam(name = "sortBy", defaultValue = "InsuranceTypeId") String sortBy,
@@ -202,7 +202,7 @@ public class AdminController {
 	}
 	@DeleteMapping("/insurance-types/{insuranceTypeId}")
 	@Operation(summary = "Deactivate an insurance type", description = "Mark an insurance type as inactive by its ID")
-	public ResponseEntity<String> deactivateInsuranceType(@PathVariable(name = "insuranceTypeId") long insuranceTypeId){
+	public ResponseEntity<String> deactivateInsurancePlan(@PathVariable(name = "insuranceTypeId") long insuranceTypeId){
 		return new ResponseEntity<String>(insuranceManagementService.deactivateInsurationPlan(insuranceTypeId),HttpStatus.OK);
 	}
 	
