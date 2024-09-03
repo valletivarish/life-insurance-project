@@ -22,7 +22,6 @@ import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.State;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
-import com.monocept.myapp.exception.GuardianLifeAssuranceException.UserNotFoundException;
 import com.monocept.myapp.repository.AddressRepository;
 import com.monocept.myapp.repository.AgentRepository;
 import com.monocept.myapp.repository.CityRepository;
@@ -52,9 +51,10 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 	@Autowired
 	private CityRepository cityRepository;
 	
-	
 	@Autowired
 	private RoleRepository roleRepository;
+
+
 
 
 	@Override
@@ -96,7 +96,6 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 		agent.setAgentId(agentRequestDto.getAgentId());
 		agent.setFirstName(agentRequestDto.getFirstName());
 		agent.setLastName(agentRequestDto.getLastName());
-
 		agent.setUser(user);
 		agentRepository.save(agent);
 
@@ -124,6 +123,8 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 		agentResponseDto.setAgentId(agent.getAgentId());
 		Address address = agent.getAddress();
 		User user = agent.getUser();
+		agentResponseDto.setFirstName(agent.getFirstName());
+		agentResponseDto.setLastName(agent.getLastName());
 		agentResponseDto.setApartment(address.getApartment());
 		agentResponseDto.setHouseNo(address.getHouseNo());
 		agentResponseDto.setPincode(address.getPincode());
