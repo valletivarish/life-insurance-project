@@ -34,11 +34,9 @@ public class SharedResourcesController {
 
 	@Autowired
 	private AgentManagementService agentManagementService;
-	
+
 	@Autowired
 	private SettingService settingService;
-	
-	
 
 	@PutMapping("/employees")
 	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
@@ -69,14 +67,14 @@ public class SharedResourcesController {
 		return new ResponseEntity<PagedResponse<AgentResponseDto>>(
 				agentManagementService.getAllAgents(page, size, sortBy, direction), HttpStatus.OK);
 	}
-	
+
 	@PostMapping("/agents")
 	@Operation(summary = "create agent", description = "creating agent")
 	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
 	public ResponseEntity<String> createAgent(@RequestBody AgentRequestDto agentRequestDto) {
 		return new ResponseEntity<String>(agentManagementService.createAgent(agentRequestDto), HttpStatus.CREATED);
 	}
-	
+
 	@GetMapping("/agents/{agentId}")
 	@Operation(summary = "get  agent by id", description = " agent")
 	public ResponseEntity<AgentResponseDto> getAgentById(@PathVariable long agentId) {
@@ -88,15 +86,28 @@ public class SharedResourcesController {
 	public ResponseEntity<String> updateAgent(@RequestBody AgentRequestDto agentRequestDto) {
 		return new ResponseEntity<String>(agentManagementService.updateAgent(agentRequestDto), HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/insurance-setting")
 	@PreAuthorize("isAuthenticated()")
-	public ResponseEntity<InsuranceSettingResponseDto> getInsuranceSetting(){
-		return new ResponseEntity<InsuranceSettingResponseDto>(settingService.getInsuranceSetting(),HttpStatus.OK);
+	public ResponseEntity<InsuranceSettingResponseDto> getInsuranceSetting() {
+		return new ResponseEntity<InsuranceSettingResponseDto>(settingService.getInsuranceSetting(), HttpStatus.OK);
 	}
+
 	@GetMapping("/tax-setting")
 	@PreAuthorize("isAuthenticated()")
-	public ResponseEntity<TaxSettingResponseDto> getTaxSetting(){
-		return new ResponseEntity<TaxSettingResponseDto>(settingService.getTaxSetting(),HttpStatus.OK);
+	public ResponseEntity<TaxSettingResponseDto> getTaxSetting() {
+		return new ResponseEntity<TaxSettingResponseDto>(settingService.getTaxSetting(), HttpStatus.OK);
 	}
+	
+	
+	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
+    @PostMapping("/customer/{documentId}/verify/{employeeId}")
+    public ResponseEntity<String> verifyDocument(
+            @PathVariable int documentId,
+            @PathVariable long employeeId) {
+        
+        String response = employeeManagementService.verifyDocument(documentId, employeeId);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+	
 }
