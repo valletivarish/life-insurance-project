@@ -17,10 +17,12 @@ import org.springframework.stereotype.Service;
 import com.monocept.myapp.dto.AgentResponseDto;
 import com.monocept.myapp.dto.EmployeeRequestDto;
 import com.monocept.myapp.dto.EmployeeResponseDto;
+import com.monocept.myapp.entity.Document;
 import com.monocept.myapp.entity.Employee;
 import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
+import com.monocept.myapp.repository.DocumentRepository;
 import com.monocept.myapp.repository.EmployeeRepository;
 import com.monocept.myapp.repository.RoleRepository;
 import com.monocept.myapp.repository.UserRepository;
@@ -37,6 +39,8 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 
 	@Autowired
 	private UserRepository userRepository;
+	@Autowired
+	private DocumentRepository documentRepository;
 
 	@Autowired
 	private EmployeeRepository employeeRepository;
@@ -132,6 +136,20 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.OK, "Employee Not found"));
 
 		return convertEmployeeToEmployeeResponseDto(employee);
+	}
+
+	public String verifyDocument(int documentId, long employeeId) {
+		Document document = documentRepository.findById(documentId)
+				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Document not found"));
+
+		Employee employee = employeeRepository.findById(employeeId)
+				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Employee not found"));
+
+		document.setVerified(true);
+		document.setVerifyBy(employee);
+		documentRepository.save(document);
+
+		return "Document verified successfully";
 	}
 
 }

@@ -17,4 +17,6 @@ public interface EmployeeManagementService {
 
 	EmployeeResponseDto getemployeesIdById(long employeesId);
 
+	String verifyDocument(int documentId, long employeeId);
+
 }
