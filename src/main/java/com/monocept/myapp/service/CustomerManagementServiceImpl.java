@@ -1,5 +1,6 @@
 package com.monocept.myapp.service;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -12,21 +13,25 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.monocept.myapp.dto.CustomerRequestDto;
 import com.monocept.myapp.dto.CustomerResponseDto;
 import com.monocept.myapp.entity.Address;
 import com.monocept.myapp.entity.City;
 import com.monocept.myapp.entity.Customer;
+import com.monocept.myapp.entity.Document;
 import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.State;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.repository.AddressRepository;
 import com.monocept.myapp.repository.CustomerRepository;
+import com.monocept.myapp.repository.DocumentRepository;
 import com.monocept.myapp.repository.RoleRepository;
 import com.monocept.myapp.repository.StateRepository;
 import com.monocept.myapp.repository.UserRepository;
+import com.monocept.myapp.util.ImageUtil;
 import com.monocept.myapp.util.PagedResponse;
 
 @Service
@@ -46,7 +51,10 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 //
 //	@Autowired
 //	private CityRepository cityRepository;
-
+	
+	@Autowired
+	private DocumentRepository documentRepository;
+	
 	@Autowired
 	private RoleRepository roleRepository;
 	@Autowired
@@ -95,7 +103,7 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		customer.setDateOfBirth(customerRequestDto.getDateOfBirth());
 		customer.setFirstName(customerRequestDto.getFirstName());
 		customer.setLastName(customerRequestDto.getLastName());
-		customer.setPhoneNumber(customer.getPhoneNumber());
+		customer.setPhoneNumber(customerRequestDto.getPhoneNumber());
 		customer.setUser(user);
 		return customerRepository.save(customer);
 	}
@@ -152,6 +160,18 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		customerResponseDto.setActive(customer.isActive());
 
 		return customerResponseDto;
+	}
+
+	@Override
+	public String uploadDocument(MultipartFile file, String documentName,long customerId) throws IOException {
+		Customer customer=customerRepository.findById(customerId).orElseThrow(()->new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Customer not found"));
+		
+		Document document=new Document();
+		document.setCustomer(customer);
+		document.setContent(ImageUtil.compressFile(file.getBytes()));
+		document.setDocumentName(documentName);
+		documentRepository.save(document);
+		return "Document uploaded successfully";
 	}
 
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
@@ -28,8 +29,13 @@ public class Document {
 
     @ManyToOne
     @JoinColumn(name = "customer_id", referencedColumnName = "customerId")
-    private Customer customer;
+    private Customer customer; 
+    
+    @ManyToOne
+    @JoinColumn(name = "verified_by", referencedColumnName = "employeeId")
+    private Employee verifyBy;
 
-    @Column(name = "content")
+    @Lob
+    @Column(name = "content", columnDefinition = "LONGBLOB")
     private byte[] content; 
 }

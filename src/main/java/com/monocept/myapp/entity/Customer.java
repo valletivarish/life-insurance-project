@@ -43,13 +43,14 @@ public class Customer {
     @Column
     private boolean active = false;
     
+    private boolean verified=false;
+     
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "addressId")
     private Address address;
     
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "document_id", referencedColumnName = "documentId")
-    private Document document;
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
+    private List<Document> documents;
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH})
     @JoinColumn(name = "userid")

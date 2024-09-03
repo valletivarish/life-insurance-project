@@ -97,7 +97,7 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 				() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Insurance plan not found"));
 		InsuranceScheme insuranceScheme = new InsuranceScheme();
 		SchemeDetail schemeDetail = new SchemeDetail();
-		schemeDetail.setSchemeImage(ImageUtil.compressImage(multipartFile.getBytes()));
+		schemeDetail.setSchemeImage(ImageUtil.compressFile(multipartFile.getBytes()));
 		schemeDetail.setDescription(requestDto.getDetailDescription());
 		schemeDetail.setInstallmentCommRatio(requestDto.getInstallmentCommRatio());
 		schemeDetail.setMaxAge(requestDto.getMaxAge());
@@ -170,7 +170,7 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 		schemeDetail.setMinPolicyTerm(requestDto.getMinPolicyTerm());
 		schemeDetail.setProfitRatio(requestDto.getProfitRatio());
 		schemeDetail.setRegistrationCommRatio(requestDto.getRegistrationCommRatio());
-		schemeDetail.setSchemeImage(ImageUtil.compressImage(multipartFile.getBytes()));
+		schemeDetail.setSchemeImage(ImageUtil.compressFile(multipartFile.getBytes()));
 		insuranceScheme.setSchemeDetail(schemeDetail);
 		insuranceScheme.setActive(requestDto.isActive());
 		insuranceScheme.setDescription(requestDto.getDescription());
