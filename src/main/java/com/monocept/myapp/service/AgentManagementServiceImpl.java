@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import com.monocept.myapp.entity.Agent;
 import com.monocept.myapp.entity.City;
 import com.monocept.myapp.entity.State;
 import com.monocept.myapp.entity.User;
+import com.monocept.myapp.exception.StudentApiException;
 import com.monocept.myapp.repository.AddressRepository;
 import com.monocept.myapp.repository.AgentRepository;
 import com.monocept.myapp.repository.CityRepository;
@@ -133,6 +135,14 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 
 		return "Agent updated successfully";
 
+	}
+
+	@Override
+	public String deleteAgent(long id) {
+		Agent agent = agentRepository.findById(id).orElseThrow(()->new StudentApiException(HttpStatus.NOT_FOUND, "Agent Not found"));
+		agent.setActive(false);
+		agentRepository.save(agent);
+		return "Agent deleted Successfully";
 	}
 
 }

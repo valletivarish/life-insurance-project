@@ -173,6 +173,10 @@ public class AdminController {
 	public ResponseEntity<String> updateAgent(@RequestBody AgentRequestDto agentRequestDto) {		
 		return new ResponseEntity<String>(agentManagementService.updateAgent(agentRequestDto),HttpStatus.OK);
 	}
+	@DeleteMapping("/agents/{id}")
+	public ResponseEntity<String> deleteAgent(@PathVariable(name = "id") long id){
+		return new ResponseEntity<String>(agentManagementService.deleteAgent(id),HttpStatus.OK);
+	}
 	
 	
 }

@@ -12,4 +12,6 @@ public interface AgentManagementService {
 
 	String updateAgent(AgentRequestDto agentRequestDto);
 
+	String deleteAgent(long id);
+
 }
