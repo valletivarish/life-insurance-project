@@ -26,6 +26,8 @@ import com.monocept.myapp.dto.EmployeeResponseDto;
 import com.monocept.myapp.dto.InsurancePlanRequestDto;
 import com.monocept.myapp.dto.InsurancePlanResponseDto;
 import com.monocept.myapp.dto.InsuranceSchemeRequestDto;
+import com.monocept.myapp.dto.InsuranceSchemeResponseDto;
+import com.monocept.myapp.dto.InsuranceSettingRequestDto;
 import com.monocept.myapp.dto.StateRequestDto;
 import com.monocept.myapp.dto.StateResponseDto;
 import com.monocept.myapp.dto.TaxSettingRequestDto;
@@ -203,9 +205,29 @@ public class AdminController {
 		return new ResponseEntity<String>(insuranceManagementService.createInsuranceScheme(insurancePlanId,multipartFile,requestDto),HttpStatus.CREATED);
 	}
 	@GetMapping("/insurance-plans/{insurancePlanId}/insurance-scheme")
-	public ResponseEntity<PagedResponse<InsurancePlanResponseDto>> getAllSchemes(@PathVariable(name = "insurancePlanId") long insurancePlanId) {
-		return new ResponseEntity<PagedResponse<InsurancePlanResponseDto>>(insuranceManagementService.getAllInsuranceSchemes(insurancePlanId),HttpStatus.OK);
+	public ResponseEntity<List<InsuranceSchemeResponseDto>> getAllSchemes(@PathVariable(name = "insurancePlanId") long insurancePlanId) {
+		return new ResponseEntity<List<InsuranceSchemeResponseDto>>(insuranceManagementService.getAllInsuranceSchemes(insurancePlanId),HttpStatus.OK);
 	}
+	@PutMapping("/insurance-plans/{insurancePlanId}/insurance-scheme")
+	public ResponseEntity<String> updateInsuranceScheme(@PathVariable(name = "insurancePlanId")long insurancePlanId,@RequestParam(name = "schemeImage") MultipartFile multipartFile, @ModelAttribute InsuranceSchemeRequestDto requestDto) throws IOException{
+		return new ResponseEntity<String>(insuranceManagementService.updateInsuranceScheme(insurancePlanId,multipartFile,requestDto),HttpStatus.OK);
+	}
+	@DeleteMapping("/insurance-plans/{insurancePlanId}/insurance-scheme/{insuranceSchemeId}")
+	public ResponseEntity<String> deleteInsuranceScheme(@PathVariable(name = "insurancePlanId")long insurancePlanId,@PathVariable(name = "insuranceSchemeId")long insuranceSchemeId){
+		return new ResponseEntity<String>(insuranceManagementService.deleteInsuranceScheme(insurancePlanId,insuranceSchemeId),HttpStatus.OK);
+		
+	}
+	@GetMapping("/insurance-plans/{insurancePlanId}/insurance-scheme/{insuranceSchemeId}")
+	public ResponseEntity<InsuranceSchemeResponseDto> getInsuranceSchemeById(@PathVariable(name = "insurancePlanId")long insurancePlanId,@PathVariable(name = "insuranceSchemeId")long insuranceSchemeId){
+		return new ResponseEntity<InsuranceSchemeResponseDto>(insuranceManagementService.getInsuranceById(insurancePlanId,insuranceSchemeId),HttpStatus.OK);
+		
+	}
+	@PostMapping("/insurance-setting")
+	public ResponseEntity<String> createInsuranceSetting(@RequestBody InsuranceSettingRequestDto insuranceSettingRequestDto){
+		return new ResponseEntity<String>(settingService.createInsuranceSetting(insuranceSettingRequestDto),HttpStatus.CREATED);
+		
+	}
+	
 	
 	
 	
