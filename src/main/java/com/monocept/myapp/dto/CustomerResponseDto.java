@@ -7,13 +7,15 @@ import lombok.Data;
 @Data
 public class CustomerResponseDto {
 	private String firstName;
+	private long customerId;
 
 	private String lastName;
-
+	private long userId;
 	private LocalDate dateOfBirth;
 
 	private String phoneNumber;
-	
+
+	private boolean active;
 
 	private String username;
 	private String email;
