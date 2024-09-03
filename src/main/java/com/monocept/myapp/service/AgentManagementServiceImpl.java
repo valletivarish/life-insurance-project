@@ -19,6 +19,7 @@ import com.monocept.myapp.entity.State;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.repository.AddressRepository;
 import com.monocept.myapp.repository.AgentRepository;
+import com.monocept.myapp.repository.CityRepository;
 import com.monocept.myapp.repository.StateRepository;
 import com.monocept.myapp.repository.UserRepository;
 import com.monocept.myapp.util.PagedResponse;
@@ -40,6 +41,9 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 
 	@Autowired
 	private StateRepository stateRepository;
+	
+	@Autowired
+	private CityRepository cityRepository;
 
 	@Override
 	public String createAgent(AgentRequestDto agentRequestDto) {
@@ -102,22 +106,18 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 
 	@Override
 	public String updateAgent(AgentRequestDto agentRequestDto) {
-	    // Find the existing agent by ID
 	    Agent existingAgent = agentRepository.findById(agentRequestDto.getAgentId())
 	            .orElseThrow(() -> new IllegalArgumentException("Agent not found with ID: " + agentRequestDto.getAgentId()));
 
-	    // Update the agent's basic details
 	    existingAgent.setFirstName(agentRequestDto.getFirstName());
 	    existingAgent.setLastName(agentRequestDto.getLastName());
 
-	    // Update the address details
 	    Address existingAddress = existingAgent.getAddress();
 	    existingAddress.setApartment(agentRequestDto.getApartment());
 	    existingAddress.setHouseNo(agentRequestDto.getHouseNo());
 	    existingAddress.setPincode(agentRequestDto.getPincode());
-
-	    City newCity = addressRepository.findById(agentRequestDto.getCityId())
-	            .orElseThrow(() -> new IllegalArgumentException("City not found with ID: " + agentRequestDto.getCityId()));
+	    City city = cityRepository.findById(agentRequestDto.getCityId()).orElse(null);
+	    City newCity = addressRepository.findByCity(city);
 	    existingAddress.setCity(newCity);
 
 	    addressRepository.save(existingAddress);
@@ -126,10 +126,8 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 	    existingUser.setUsername(agentRequestDto.getUsername());
 	    existingUser.setEmail(agentRequestDto.getEmail());
 
-	    // Save the updated user details
 	    userRepository.save(existingUser);
 
-	    // Save the updated agent
 	    agentRepository.save(existingAgent);
 
 	    return "Agent updated successfully";
