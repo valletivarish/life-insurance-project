@@ -157,31 +157,16 @@ public class AdminController {
 
 	}
 
-	@PutMapping("/employees")
-	@Operation(summary = "Update employee details", description = "Update the details of an existing employee")
-	public ResponseEntity<EmployeeResponseDto> updateEmployee(@RequestBody EmployeeRequestDto employeeRequestDto) {
-		return new ResponseEntity<EmployeeResponseDto>(employeeManagementService.updateEmployee(employeeRequestDto),
-				HttpStatus.OK);
-	}
+	
 	@DeleteMapping("/employees/{employeeId}")
 	@Operation(summary = "Deactivate an employee", description = "Mark an employee as inactive by their ID")
 	public ResponseEntity<String> deactivateEmployee(@PathVariable(name = "employeeId") long employeeId){
 		return new ResponseEntity<String>(employeeManagementService.deactivateEmployee(employeeId),HttpStatus.OK);
 	}
 	
-	@PostMapping("/agents")
-	public ResponseEntity<String> createAgent(@RequestBody AgentRequestDto agentRequestDto) {
-		return new ResponseEntity<String>(agentManagementService.createAgent(agentRequestDto),HttpStatus.CREATED);
-	}
-	@GetMapping("/agents")
-	public ResponseEntity<PagedResponse<AgentResponseDto>> getAllAgents(
-			@RequestParam(name = "page",defaultValue = "0")int page,@RequestParam(name = "size",defaultValue = "5")int size,@RequestParam(name = "sortBy",defaultValue = "agentId") String sortBy,@RequestParam(name = "direction") String direction) {
-		return new ResponseEntity<PagedResponse<AgentResponseDto>>(agentManagementService.getAllAgents(page,size,sortBy,direction),HttpStatus.OK);
-	}
-	@PutMapping("/agents")
-	public ResponseEntity<String> updateAgent(@RequestBody AgentRequestDto agentRequestDto) {		
-		return new ResponseEntity<String>(agentManagementService.updateAgent(agentRequestDto),HttpStatus.OK);
-	}
+	
+	
+	
 	@DeleteMapping("/agents/{id}")
 	public ResponseEntity<String> deleteAgent(@PathVariable(name = "id") long id){
 		return new ResponseEntity<String>(agentManagementService.deleteAgent(id),HttpStatus.OK);
