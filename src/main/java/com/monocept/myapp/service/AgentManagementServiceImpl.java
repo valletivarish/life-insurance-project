@@ -55,7 +55,6 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 		City city = cities.stream().filter(c -> c.getCityId() == agentRequestDto.getCityId()).findFirst().orElse(null);
 		address.setCity(city);
 		agent.setAddress(address);
-		
 
 		address.setHouseNo(agentRequestDto.getHouseNo());
 		address.setPincode(agentRequestDto.getPincode());
@@ -67,24 +66,26 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 		agent.setFirstName(agentRequestDto.getFirstName());
 		agent.setLastName(agentRequestDto.getLastName());
 		agentRepository.save(agent);
-		
-		System.out.println("hello");
 
+		System.out.println("hello");
 		return "Agent Created Successfully";
-		
+
 	}
 
 	@Override
 	public PagedResponse<AgentResponseDto> getAllAgents(int page, int size, String sortBy, String direction) {
-		Sort sort=direction.equalsIgnoreCase(Sort.Direction.DESC.name()) ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+		Sort sort = direction.equalsIgnoreCase(Sort.Direction.DESC.name()) ? Sort.by(sortBy).descending()
+				: Sort.by(sortBy).ascending();
 		PageRequest pageRequest = PageRequest.of(page, size, sort);
 		Page<Agent> agentPage = agentRepository.findAll(pageRequest);
-		List<AgentResponseDto> agents=agentPage.getContent().stream().map(agent->convertAgentToAgentResponseDto(agent)).collect(Collectors.toList());
-		return new PagedResponse<AgentResponseDto>(agents, agentPage.getNumber(), agentPage.getSize(), agentPage.getTotalElements(), agentPage.getTotalPages(), agentPage.isLast());
+		List<AgentResponseDto> agents = agentPage.getContent().stream()
+				.map(agent -> convertAgentToAgentResponseDto(agent)).collect(Collectors.toList());
+		return new PagedResponse<AgentResponseDto>(agents, agentPage.getNumber(), agentPage.getSize(),
+				agentPage.getTotalElements(), agentPage.getTotalPages(), agentPage.isLast());
 	}
 
 	private AgentResponseDto convertAgentToAgentResponseDto(Agent agent) {
-		AgentResponseDto agentResponseDto=new AgentResponseDto();
+		AgentResponseDto agentResponseDto = new AgentResponseDto();
 		agentResponseDto.setAgentId(agent.getAgentId());
 		Address address = agent.getAddress();
 		User user = agent.getUser();
@@ -102,10 +103,9 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 
 	@Override
 	public String updateAgent(AgentResponseDto agentResponseDto) {
-		Agent existingAgent = agentRepository.findById(agentResponseDto.getAgentId())
-	            .orElseThrow(() -> new IllegalArgumentException("Agent not found with ID: " + agentResponseDto.getAgentId()));
-		
-		
+		Agent existingAgent = agentRepository.findById(agentResponseDto.getAgentId()).orElseThrow(
+				() -> new IllegalArgumentException("Agent not found with ID: " + agentResponseDto.getAgentId()));
+
 		return null;
 	}
 
