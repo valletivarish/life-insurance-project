@@ -25,7 +25,6 @@ public class Address {
 
     private String apartment;
 
-    @NotEmpty(message = "City is required")
     @ManyToOne
     @JoinColumn(name = "city_id", referencedColumnName = "cityId")
     private City city;
