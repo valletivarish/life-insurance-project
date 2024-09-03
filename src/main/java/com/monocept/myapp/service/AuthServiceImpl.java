@@ -16,7 +16,7 @@ import com.monocept.myapp.dto.RegisterDto;
 import com.monocept.myapp.entity.Admin;
 import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.User;
-import com.monocept.myapp.exception.StudentApiException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.repository.AdminRepository;
 import com.monocept.myapp.repository.RoleRepository;
 import com.monocept.myapp.repository.UserRepository;
@@ -58,11 +58,11 @@ public class AuthServiceImpl implements AuthService {
 	@Override
     public String register(RegisterDto registerDto) {
         if (userRepository.existsByUsername(registerDto.getUsername())) {
-            throw new StudentApiException(HttpStatus.BAD_REQUEST, "Username already exists!");
+            throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Username already exists!");
         }
 
         if (userRepository.existsByEmail(registerDto.getEmail())) {
-            throw new StudentApiException(HttpStatus.BAD_REQUEST, "Email already exists!");
+            throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Email already exists!");
         }
 
         User user = new User();
@@ -73,7 +73,7 @@ public class AuthServiceImpl implements AuthService {
         Set<Role> roles = new HashSet<>();
         for (String roleName : registerDto.getRoles()) {
             Role role = roleRepository.findByName(roleName)
-                    .orElseThrow(() -> new StudentApiException(HttpStatus.BAD_REQUEST, "Role not found: " + roleName));
+                    .orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Role not found: " + roleName));
             roles.add(role);
         }
 
