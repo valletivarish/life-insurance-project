@@ -18,7 +18,7 @@ import com.monocept.myapp.dto.EmployeeResponseDto;
 import com.monocept.myapp.entity.Employee;
 import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.User;
-import com.monocept.myapp.exception.StudentApiException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.repository.EmployeeRepository;
 import com.monocept.myapp.repository.RoleRepository;
 import com.monocept.myapp.repository.UserRepository;
@@ -41,11 +41,11 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 
 	public String createEmployee(EmployeeRequestDto employeeRequestDto) {
 		if (userRepository.existsByUsername(employeeRequestDto.getUsername())) {
-			throw new StudentApiException(HttpStatus.BAD_REQUEST, "Username already exists!");
+			throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Username already exists!");
 		}
 
 		if (userRepository.existsByEmail(employeeRequestDto.getEmail())) {
-			throw new StudentApiException(HttpStatus.BAD_REQUEST, "Email already exists!");
+			throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Email already exists!");
 		}
 		User user = new User();
 		user.setUsername(employeeRequestDto.getUsername());
@@ -55,7 +55,7 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 		Set<Role> roles = new HashSet<>();
 		String roleName="ROLE_EMPLOYEE";
 		Role role = roleRepository.findByName(roleName)
-				.orElseThrow(() -> new StudentApiException(HttpStatus.BAD_REQUEST, "Role not found: " + roleName));
+				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Role not found: " + roleName));
 		roles.add(role);
 
 		user.setRoles(roles);
@@ -97,7 +97,7 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 	@Override
 	public EmployeeResponseDto updateEmployee(EmployeeRequestDto employeeRequestDto) {
 		Employee employee = employeeRepository.findById(employeeRequestDto.getEmployeeId())
-				.orElseThrow(() -> new StudentApiException(HttpStatus.NOT_FOUND, "employee not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "employee not found"));
 		User user = employee.getUser();
 		if (employeeRequestDto.getEmail() != null && employeeRequestDto.getEmail() != "") {
 			user.setEmail(employeeRequestDto.getEmail());
@@ -112,9 +112,9 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 
 	@Override
 	public String deactivateEmployee(long employeeId) {
-		Employee employee = employeeRepository.findById(employeeId).orElseThrow(()->new StudentApiException(HttpStatus.OK, "Employee Not found"));
+		Employee employee = employeeRepository.findById(employeeId).orElseThrow(()->new GuardianLifeAssuranceApiException(HttpStatus.OK, "Employee Not found"));
 		if(!employee.isActive()) {
-			throw new StudentApiException(HttpStatus.CONFLICT, "Employee is already deleted");
+			throw new GuardianLifeAssuranceApiException(HttpStatus.CONFLICT, "Employee is already deleted");
 		}
 		employee.setActive(false);
 		employeeRepository.save(employee);
