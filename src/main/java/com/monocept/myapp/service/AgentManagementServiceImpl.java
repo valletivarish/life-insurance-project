@@ -18,7 +18,7 @@ import com.monocept.myapp.entity.Agent;
 import com.monocept.myapp.entity.City;
 import com.monocept.myapp.entity.State;
 import com.monocept.myapp.entity.User;
-import com.monocept.myapp.exception.StudentApiException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.repository.AddressRepository;
 import com.monocept.myapp.repository.AgentRepository;
 import com.monocept.myapp.repository.CityRepository;
@@ -139,7 +139,7 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 
 	@Override
 	public String deleteAgent(long id) {
-		Agent agent = agentRepository.findById(id).orElseThrow(()->new StudentApiException(HttpStatus.NOT_FOUND, "Agent Not found"));
+		Agent agent = agentRepository.findById(id).orElseThrow(()->new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Agent Not found"));
 		agent.setActive(false);
 		agentRepository.save(agent);
 		return "Agent deleted Successfully";
