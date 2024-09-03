@@ -40,21 +40,21 @@ import io.swagger.v3.oas.annotations.Operation;
 @RequestMapping("/GuardianLifeAssurance/admin")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
-	
+
 	@Autowired
 	private StateAndCityManagementService stateAndCityManagementService;
-	
+
 	@Autowired
 	private SettingService settingService;
-	
+
 	@Autowired
 	private EmployeeManagementService employeeManagementService;
-	
+
 	@Autowired
 	private AgentManagementService agentManagementService;
-	
+
 	private InsuranceManagementService insuranceManagementService;
-	
+
 	@PostMapping("/states")
 	@Operation(summary = "Create a new state", description = "Add a new state to the system")
 	public ResponseEntity<StateResponseDto> createState(@RequestBody StateRequestDto stateRequestDto) {
@@ -133,6 +133,7 @@ public class AdminController {
 	public ResponseEntity<String> createTaxSetting(@RequestBody TaxSettingRequestDto taxSettingRequestDto) {
 		return new ResponseEntity<String>(settingService.createTaxSetting(taxSettingRequestDto), HttpStatus.CREATED);
 	}
+
 	@GetMapping("/employees")
 	@Operation(summary = "Get all employees", description = "Retrieve a paginated list of all employees")
 	public ResponseEntity<PagedResponse<EmployeeResponseDto>> getAllEmployees(
@@ -152,44 +153,48 @@ public class AdminController {
 
 	}
 
-	
 	@DeleteMapping("/employees/{employeeId}")
 	@Operation(summary = "Deactivate an employee", description = "Mark an employee as inactive by their ID")
-	public ResponseEntity<String> deactivateEmployee(@PathVariable(name = "employeeId") long employeeId){
-		return new ResponseEntity<String>(employeeManagementService.deactivateEmployee(employeeId),HttpStatus.OK);
+	public ResponseEntity<String> deactivateEmployee(@PathVariable(name = "employeeId") long employeeId) {
+		return new ResponseEntity<String>(employeeManagementService.deactivateEmployee(employeeId), HttpStatus.OK);
 	}
-	
-	
-	
-	
+
 	@DeleteMapping("/agents/{id}")
-	public ResponseEntity<String> deleteAgent(@PathVariable(name = "id") long id){
-		return new ResponseEntity<String>(agentManagementService.deleteAgent(id),HttpStatus.OK);
+	public ResponseEntity<String> deleteAgent(@PathVariable(name = "id") long id) {
+		return new ResponseEntity<String>(agentManagementService.deleteAgent(id), HttpStatus.OK);
 	}
+
 	@PostMapping("/insurance-types")
 	@Operation(summary = "Create a new insurance type", description = "Add a new insurance type to the system")
-	public ResponseEntity<String> createInsurancePlan(@RequestBody InsurancePlanRequestDto insurancePlanRequestDto){
-		return new ResponseEntity<String>(insuranceManagementService.createInsurancePlan(insurancePlanRequestDto),HttpStatus.CREATED);
+	public ResponseEntity<String> createInsurancePlan(@RequestBody InsurancePlanRequestDto insurancePlanRequestDto) {
+		return new ResponseEntity<String>(insuranceManagementService.createInsurancePlan(insurancePlanRequestDto),
+				HttpStatus.CREATED);
 	}
+
 	@PutMapping("/insurance-types")
 	@Operation(summary = "Update insurance type details", description = "Update the details of an existing insurance type")
-	public ResponseEntity<String> updateInsurancePlan(@RequestBody InsurancePlanRequestDto insurancePlanRequestDto){
-		return new ResponseEntity<String>(insuranceManagementService.updateInsurancePlan(insurancePlanRequestDto),HttpStatus.OK);
+	public ResponseEntity<String> updateInsurancePlan(@RequestBody InsurancePlanRequestDto insurancePlanRequestDto) {
+		return new ResponseEntity<String>(insuranceManagementService.updateInsurancePlan(insurancePlanRequestDto),
+				HttpStatus.OK);
 	}
+
 	@GetMapping("/insurance-types")
 	@Operation(summary = "Get all insurance types", description = "Retrieve a paginated list of all insurance types")
 	public ResponseEntity<PagedResponse<InsurancePlanResponseDto>> getAllInsurancePlans(
 			@RequestParam(name = "page", defaultValue = "0") int page,
 			@RequestParam(name = "size", defaultValue = "5") int size,
 			@RequestParam(name = "sortBy", defaultValue = "InsuranceTypeId") String sortBy,
-			@RequestParam(name = "direction", defaultValue = "asc") String direction){
-		return new ResponseEntity<PagedResponse<InsurancePlanResponseDto>>(insuranceManagementService.getAllInsurancePlans(page,size,sortBy,direction),HttpStatus.OK);
+			@RequestParam(name = "direction", defaultValue = "asc") String direction) {
+		return new ResponseEntity<PagedResponse<InsurancePlanResponseDto>>(
+				insuranceManagementService.getAllInsurancePlans(page, size, sortBy, direction), HttpStatus.OK);
 	}
+
 	@DeleteMapping("/insurance-types/{insuranceTypeId}")
 	@Operation(summary = "Deactivate an insurance type", description = "Mark an insurance type as inactive by its ID")
-	public ResponseEntity<String> deactivateInsurancePlan(@PathVariable(name = "insuranceTypeId") long insuranceTypeId){
-		return new ResponseEntity<String>(insuranceManagementService.deactivateInsurationPlan(insuranceTypeId),HttpStatus.OK);
+	public ResponseEntity<String> deactivateInsurancePlan(
+			@PathVariable(name = "insuranceTypeId") long insuranceTypeId) {
+		return new ResponseEntity<String>(insuranceManagementService.deactivateInsurationPlan(insuranceTypeId),
+				HttpStatus.OK);
 	}
-	
-	
+
 }
