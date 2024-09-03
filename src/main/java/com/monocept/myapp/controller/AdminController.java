@@ -22,11 +22,14 @@ import com.monocept.myapp.dto.CityRequestDto;
 import com.monocept.myapp.dto.CityResponseDto;
 import com.monocept.myapp.dto.EmployeeRequestDto;
 import com.monocept.myapp.dto.EmployeeResponseDto;
+import com.monocept.myapp.dto.InsurancePlanRequestDto;
+import com.monocept.myapp.dto.InsurancePlanResponseDto;
 import com.monocept.myapp.dto.StateRequestDto;
 import com.monocept.myapp.dto.StateResponseDto;
 import com.monocept.myapp.dto.TaxSettingRequestDto;
 import com.monocept.myapp.service.AgentManagementService;
 import com.monocept.myapp.service.EmployeeManagementService;
+import com.monocept.myapp.service.InsuranceManagementService;
 import com.monocept.myapp.service.SettingService;
 import com.monocept.myapp.service.StateAndCityManagementService;
 import com.monocept.myapp.util.PagedResponse;
@@ -50,6 +53,7 @@ public class AdminController {
 	@Autowired
 	private AgentManagementService agentManagementService;
 	
+	private InsuranceManagementService insuranceManagementService;
 	
 	@PostMapping("/states")
 	@Operation(summary = "Create a new state", description = "Add a new state to the system")
@@ -176,6 +180,30 @@ public class AdminController {
 	@DeleteMapping("/agents/{id}")
 	public ResponseEntity<String> deleteAgent(@PathVariable(name = "id") long id){
 		return new ResponseEntity<String>(agentManagementService.deleteAgent(id),HttpStatus.OK);
+	}
+	@PostMapping("/insurance-types")
+	@Operation(summary = "Create a new insurance type", description = "Add a new insurance type to the system")
+	public ResponseEntity<String> createInsuranceType(@RequestBody InsurancePlanRequestDto insurancePlanRequestDto){
+		return new ResponseEntity<String>(insuranceManagementService.createInsurancePlan(insurancePlanRequestDto),HttpStatus.CREATED);
+	}
+	@PutMapping("/insurance-types")
+	@Operation(summary = "Update insurance type details", description = "Update the details of an existing insurance type")
+	public ResponseEntity<String> updateInsuranceType(@RequestBody InsurancePlanRequestDto insurancePlanRequestDto){
+		return new ResponseEntity<String>(insuranceManagementService.updateInsurancePlan(insurancePlanRequestDto),HttpStatus.OK);
+	}
+	@GetMapping("/insurance-types")
+	@Operation(summary = "Get all insurance types", description = "Retrieve a paginated list of all insurance types")
+	public ResponseEntity<PagedResponse<InsurancePlanResponseDto>> getAllInsuranceTypes(
+			@RequestParam(name = "page", defaultValue = "0") int page,
+			@RequestParam(name = "size", defaultValue = "5") int size,
+			@RequestParam(name = "sortBy", defaultValue = "InsuranceTypeId") String sortBy,
+			@RequestParam(name = "direction", defaultValue = "asc") String direction){
+		return new ResponseEntity<PagedResponse<InsurancePlanResponseDto>>(insuranceManagementService.getAllInsurancePlans(page,size,sortBy,direction),HttpStatus.OK);
+	}
+	@DeleteMapping("/insurance-types/{insuranceTypeId}")
+	@Operation(summary = "Deactivate an insurance type", description = "Mark an insurance type as inactive by its ID")
+	public ResponseEntity<String> deactivateInsuranceType(@PathVariable(name = "insuranceTypeId") long insuranceTypeId){
+		return new ResponseEntity<String>(insuranceManagementService.deactivateInsurationPlan(insuranceTypeId),HttpStatus.OK);
 	}
 	
 	
