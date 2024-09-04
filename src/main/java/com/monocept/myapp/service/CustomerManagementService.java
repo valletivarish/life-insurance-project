@@ -7,8 +7,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.monocept.myapp.dto.CustomerRequestDto;
 import com.monocept.myapp.dto.CustomerResponseDto;
 import com.monocept.myapp.dto.CustomerSideQueryRequestDto;
+import com.monocept.myapp.dto.PolicyAccountRequestDto;
+import com.monocept.myapp.dto.PolicyAccountResponseDto;
 import com.monocept.myapp.dto.QueryReplyDto;
 import com.monocept.myapp.dto.QueryResponseDto;
+import com.monocept.myapp.enums.DocumentType;
 import com.monocept.myapp.util.PagedResponse;
 
 public interface CustomerManagementService {
@@ -23,7 +26,7 @@ public interface CustomerManagementService {
 
 	String deactivateCustomer(Long customerID);
 
-	String uploadDocument(MultipartFile file, String documentName, long customerId) throws IOException;
+	String uploadDocument(MultipartFile file, DocumentType documentName, long customerId) throws IOException;
 
 	String createCustomerQuery(long customerId, CustomerSideQueryRequestDto customerSideQueryRequestDto);
 
@@ -36,5 +39,12 @@ public interface CustomerManagementService {
 	String respondToQuery(long queryId, QueryReplyDto queryReplyDto);
 
 	PagedResponse<QueryResponseDto> getAllQueries(int page, int size, String sortBy, String direction);
+
+	Long buyPolicy(PolicyAccountRequestDto accountRequestDto, long customerId);
+
+	PagedResponse<PolicyAccountResponseDto> getAllPoliciesByCustomerId(long customerId, int page, int size, String sortBy,
+			String direction);
+
+	PolicyAccountResponseDto getPolicyById(long customerId, long policyId);
 
 }
