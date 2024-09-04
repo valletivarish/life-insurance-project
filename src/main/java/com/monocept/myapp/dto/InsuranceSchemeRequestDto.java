@@ -1,5 +1,9 @@
 package com.monocept.myapp.dto;
 
+import java.util.List;
+
+import com.monocept.myapp.enums.DocumentType;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
@@ -48,4 +52,7 @@ public class InsuranceSchemeRequestDto {
 
     @PositiveOrZero(message = "Installment commission ratio must be a non-negative number")
     private Double installmentCommRatio;
+    
+    @NotEmpty(message = "At least one document type is required")
+    private List<DocumentType> requiredDocuments;
 }

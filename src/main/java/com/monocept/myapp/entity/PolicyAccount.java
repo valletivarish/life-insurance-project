@@ -1,6 +1,6 @@
 package com.monocept.myapp.entity;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,7 +26,7 @@ import lombok.Data;
 @Entity
 @Table(name = "insurancePolicies")
 @Data
-public class InsurancePolicy {
+public class PolicyAccount {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,22 +36,36 @@ public class InsurancePolicy {
     @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REFRESH})
     @JoinColumn(name = "schemeId", referencedColumnName = "schemeId")
     private InsuranceScheme insuranceScheme;
+    
+    @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REFRESH})
+    @JoinColumn(name = "customerId", referencedColumnName = "customerId")
+    private Customer customer;
 
     @Column(name = "issueDate")
     @CreationTimestamp
-    private Date issueDate;
+    private LocalDate issueDate=LocalDate.now(); //
 
     @Column(name = "maturityDate")
-    private Date maturityDate;
+    private LocalDate maturityDate; //
 
     @Column(name = "premiumType")
-    private PremiumType premiumType;
+    private PremiumType premiumType; //
 
     @Column(name = "sumAssured")
     private Double sumAssured;
+    
+    @Column(name = "policyTerm")
+    private Long policyTerm;
 
     @Column(name = "premiumAmount")
     private Double premiumAmount;
+    
+    private Double installmentAmount;
+    
+    private Double totalPaidAmount;
+    
+    @OneToMany(mappedBy = "insurancePolicy", cascade = CascadeType.ALL)
+    private List<Installment> installments;
 
     @Column(name = "status")
     private PolicyStatus status = PolicyStatus.PENDING;

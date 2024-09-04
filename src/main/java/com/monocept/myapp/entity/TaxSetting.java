@@ -34,7 +34,7 @@ public class TaxSetting {
     private LocalDateTime updatedAt;
     
     @OneToMany(mappedBy = "taxSetting")
-    private List<InsurancePolicy> insurancePolicies;
+    private List<PolicyAccount> insurancePolicies;
 
 }
 

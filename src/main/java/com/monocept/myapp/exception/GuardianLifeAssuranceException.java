@@ -28,6 +28,14 @@ public class GuardianLifeAssuranceException extends RuntimeException {
 			super(message);
 		}
 	}
+	public static class DocumentNotVerifiedException extends GuardianLifeAssuranceException {
+		private static final long serialVersionUID = 1L;
+
+		public DocumentNotVerifiedException(String message) {
+			super(message);
+		}
+	}
+
 
 	public static class UserNotFoundException extends GuardianLifeAssuranceException {
 		private static final long serialVersionUID = 1L;
