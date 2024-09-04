@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,7 +18,6 @@ import com.monocept.myapp.dto.InsuranceSchemeResponseDto;
 import com.monocept.myapp.entity.InsurancePlan;
 import com.monocept.myapp.entity.InsuranceScheme;
 import com.monocept.myapp.entity.SchemeDetail;
-import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
 import com.monocept.myapp.repository.InsurancePlanRepository;
 import com.monocept.myapp.repository.InsuranceSchemeRepository;
@@ -193,6 +191,7 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 	                    "Sorry, we couldn't find an Insurance Scheme with ID: " + insuranceSchemeId));
 		schemeToDelete.setActive(false);
 		insuranceSchemeRepository.save(schemeToDelete);
+
 		return "Insurance Scheme '" + schemeToDelete.getSchemeName() + "' has been successfully deactivated.";
 	}
 

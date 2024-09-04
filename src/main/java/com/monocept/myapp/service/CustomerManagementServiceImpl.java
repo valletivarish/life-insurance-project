@@ -57,9 +57,6 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 
 	@Autowired
 	private QueryRepository queryRepository;
-//
-//	@Autowired
-//	private CityRepository cityRepository;
 
 	@Autowired
 	private DocumentRepository documentRepository;
