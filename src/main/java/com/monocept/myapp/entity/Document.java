@@ -1,5 +1,7 @@
 package com.monocept.myapp.entity;
 
+import com.monocept.myapp.enums.DocumentType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -22,7 +24,7 @@ public class Document {
     private int documentId;
 
     @Column(name = "document_name")
-    private String documentName;
+    private DocumentType documentName;
 
     @Column(name = "verified")
     private boolean verified;

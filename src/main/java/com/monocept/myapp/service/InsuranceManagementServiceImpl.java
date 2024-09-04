@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,13 +16,14 @@ import com.monocept.myapp.dto.InsurancePlanRequestDto;
 import com.monocept.myapp.dto.InsurancePlanResponseDto;
 import com.monocept.myapp.dto.InsuranceSchemeRequestDto;
 import com.monocept.myapp.dto.InsuranceSchemeResponseDto;
+import com.monocept.myapp.dto.InterestCalculatorRequestDto;
+import com.monocept.myapp.dto.InterestCalculatorResponseDto;
 import com.monocept.myapp.entity.InsurancePlan;
 import com.monocept.myapp.entity.InsuranceScheme;
-import com.monocept.myapp.entity.SchemeDetail;
+import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
 import com.monocept.myapp.repository.InsurancePlanRepository;
 import com.monocept.myapp.repository.InsuranceSchemeRepository;
-import com.monocept.myapp.repository.SchemeDetailRepository;
 import com.monocept.myapp.util.ImageUtil;
 import com.monocept.myapp.util.PagedResponse;
 
@@ -30,9 +32,6 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 
 	@Autowired
 	private InsurancePlanRepository insurancePlanRepository;
-
-	@Autowired
-	private SchemeDetailRepository schemeDetailRepository;
 
 	@Autowired
 	private InsuranceSchemeRepository insuranceSchemeRepository;
@@ -84,7 +83,8 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 	@Override
 	public String deactivateInsurancePlan(long insurancePlanId) {
 		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId)
-				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
 		insurancePlan.setActive(false);
 		insurancePlanRepository.save(insurancePlan);
 		return "Insurance Plan '" + insurancePlan.getPlanName() + "' has been successfully deactivated.";
@@ -93,26 +93,25 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 	@Override
 	public String createInsuranceScheme(long insurancePlanId, MultipartFile multipartFile,
 			InsuranceSchemeRequestDto requestDto) throws IOException {
-		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId).orElseThrow(
-				() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
+		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
 		InsuranceScheme insuranceScheme = new InsuranceScheme();
-		SchemeDetail schemeDetail = new SchemeDetail();
-		schemeDetail.setSchemeImage(ImageUtil.compressFile(multipartFile.getBytes()));
-		schemeDetail.setDescription(requestDto.getDetailDescription());
-		schemeDetail.setInstallmentCommRatio(requestDto.getInstallmentCommRatio());
-		schemeDetail.setMaxAge(requestDto.getMaxAge());
-		schemeDetail.setMaxAmount(requestDto.getMaxAmount());
-		schemeDetail.setMaxPolicyTerm(requestDto.getMaxPolicyTerm());
-		schemeDetail.setMinAge(requestDto.getMinAge());
-		schemeDetail.setMinAmount(requestDto.getMinAmount());
-		schemeDetail.setMinPolicyTerm(requestDto.getMinPolicyTerm());
-		schemeDetail.setProfitRatio(requestDto.getProfitRatio());
-		schemeDetail.setRegistrationCommRatio(requestDto.getRegistrationCommRatio());
-		schemeDetailRepository.save(schemeDetail);
+		insuranceScheme.setSchemeImage(ImageUtil.compressFile(multipartFile.getBytes()));
+		insuranceScheme.setDescription(requestDto.getDetailDescription());
+		insuranceScheme.setInstallmentCommRatio(requestDto.getInstallmentCommRatio());
+		insuranceScheme.setMaxAge(requestDto.getMaxAge());
+		insuranceScheme.setMaxAmount(requestDto.getMaxAmount());
+		insuranceScheme.setMaxPolicyTerm(requestDto.getMaxPolicyTerm());
+		insuranceScheme.setMinAge(requestDto.getMinAge());
+		insuranceScheme.setMinAmount(requestDto.getMinAmount());
+		insuranceScheme.setMinPolicyTerm(requestDto.getMinPolicyTerm());
+		insuranceScheme.setProfitRatio(requestDto.getProfitRatio());
+		insuranceScheme.setRegistrationCommRatio(requestDto.getRegistrationCommRatio());
 		insuranceScheme.setActive(true);
 		insuranceScheme.setDescription(requestDto.getDescription());
 		insuranceScheme.setSchemeName(requestDto.getSchemeName());
-		insuranceScheme.setSchemeDetail(schemeDetail);
+		insuranceScheme.setInsurancePlan(insurancePlan);
 		insuranceSchemeRepository.save(insuranceScheme);
 		List<InsuranceScheme> schemes = insurancePlan.getScheme();
 		schemes.add(insuranceScheme);
@@ -124,8 +123,9 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 
 	@Override
 	public List<InsuranceSchemeResponseDto> getAllInsuranceSchemes(long insurancePlanId) {
-		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId).orElseThrow(
-				() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
+		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
 		List<InsuranceSchemeResponseDto> schemes = insurancePlan.getScheme().stream()
 				.map(scheme -> convertSchemeToSchemeResponseDto(scheme)).collect(Collectors.toList());
 		return schemes;
@@ -135,19 +135,17 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 		InsuranceSchemeResponseDto schemeResponseDto = new InsuranceSchemeResponseDto();
 		schemeResponseDto.setActive(scheme.isActive());
 		schemeResponseDto.setDescription(scheme.getDescription());
-		SchemeDetail schemeDetail = scheme.getSchemeDetail();
-		schemeResponseDto.setSchemeDetailId(schemeDetail.getDetailId());
 		schemeResponseDto.setSchemeId(scheme.getSchemeId());
-		schemeResponseDto.setDetailDescription(schemeDetail.getDescription());
-		schemeResponseDto.setInstallmentCommRatio(schemeDetail.getInstallmentCommRatio());
-		schemeResponseDto.setMaxAge(schemeDetail.getMaxAge());
-		schemeResponseDto.setMaxAmount(schemeDetail.getMaxAmount());
-		schemeResponseDto.setMaxPolicyTerm(schemeDetail.getMaxPolicyTerm());
-		schemeResponseDto.setMinAge(schemeDetail.getMinAge());
-		schemeResponseDto.setMinAmount(schemeDetail.getMinAmount());
-		schemeResponseDto.setMinPolicyTerm(schemeDetail.getMinPolicyTerm());
-		schemeResponseDto.setProfitRatio(schemeDetail.getProfitRatio());
-		schemeResponseDto.setRegistrationCommRatio(schemeDetail.getRegistrationCommRatio());
+		schemeResponseDto.setDetailDescription(scheme.getDescription());
+		schemeResponseDto.setInstallmentCommRatio(scheme.getInstallmentCommRatio());
+		schemeResponseDto.setMaxAge(scheme.getMaxAge());
+		schemeResponseDto.setMaxAmount(scheme.getMaxAmount());
+		schemeResponseDto.setMaxPolicyTerm(scheme.getMaxPolicyTerm());
+		schemeResponseDto.setMinAge(scheme.getMinAge());
+		schemeResponseDto.setMinAmount(scheme.getMinAmount());
+		schemeResponseDto.setMinPolicyTerm(scheme.getMinPolicyTerm());
+		schemeResponseDto.setProfitRatio(scheme.getProfitRatio());
+		schemeResponseDto.setRegistrationCommRatio(scheme.getRegistrationCommRatio());
 		schemeResponseDto.setSchemeName(scheme.getSchemeName());
 		return schemeResponseDto;
 	}
@@ -155,24 +153,23 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 	@Override
 	public String updateInsuranceScheme(long insurancePlanId, MultipartFile multipartFile,
 			InsuranceSchemeRequestDto requestDto) throws IOException {
-		insurancePlanRepository.findById(insurancePlanId).orElseThrow(
-				() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
-		InsuranceScheme insuranceScheme = insuranceSchemeRepository.findById(requestDto.getSchemeId()).orElseThrow(
-				() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
-	                    "Sorry, we couldn't find an Insurance Scheme with ID: " + requestDto.getSchemeId()));
-		SchemeDetail schemeDetail = insuranceScheme.getSchemeDetail();
-		schemeDetail.setDescription(requestDto.getDetailDescription());
-		schemeDetail.setInstallmentCommRatio(requestDto.getInstallmentCommRatio());
-		schemeDetail.setMaxAge(requestDto.getMaxAge());
-		schemeDetail.setMaxAmount(requestDto.getMaxAmount());
-		schemeDetail.setMaxPolicyTerm(requestDto.getMaxPolicyTerm());
-		schemeDetail.setMinAge(requestDto.getMinAge());
-		schemeDetail.setMinAmount(requestDto.getMinAmount());
-		schemeDetail.setMinPolicyTerm(requestDto.getMinPolicyTerm());
-		schemeDetail.setProfitRatio(requestDto.getProfitRatio());
-		schemeDetail.setRegistrationCommRatio(requestDto.getRegistrationCommRatio());
-		schemeDetail.setSchemeImage(ImageUtil.compressFile(multipartFile.getBytes()));
-		insuranceScheme.setSchemeDetail(schemeDetail);
+		insurancePlanRepository.findById(insurancePlanId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
+		InsuranceScheme insuranceScheme = insuranceSchemeRepository.findById(requestDto.getSchemeId())
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Sorry, we couldn't find an Insurance Scheme with ID: " + requestDto.getSchemeId()));
+		insuranceScheme.setDescription(requestDto.getDetailDescription());
+		insuranceScheme.setInstallmentCommRatio(requestDto.getInstallmentCommRatio());
+		insuranceScheme.setMaxAge(requestDto.getMaxAge());
+		insuranceScheme.setMaxAmount(requestDto.getMaxAmount());
+		insuranceScheme.setMaxPolicyTerm(requestDto.getMaxPolicyTerm());
+		insuranceScheme.setMinAge(requestDto.getMinAge());
+		insuranceScheme.setMinAmount(requestDto.getMinAmount());
+		insuranceScheme.setMinPolicyTerm(requestDto.getMinPolicyTerm());
+		insuranceScheme.setProfitRatio(requestDto.getProfitRatio());
+		insuranceScheme.setRegistrationCommRatio(requestDto.getRegistrationCommRatio());
+		insuranceScheme.setSchemeImage(ImageUtil.compressFile(multipartFile.getBytes()));
 		insuranceScheme.setActive(requestDto.isActive());
 		insuranceScheme.setDescription(requestDto.getDescription());
 		insuranceScheme.setSchemeName(requestDto.getSchemeName());
@@ -183,12 +180,13 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 
 	@Override
 	public String deleteInsuranceScheme(long insurancePlanId, long insuranceSchemeId) {
-		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId).orElseThrow(
-				() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
+		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
 		InsuranceScheme schemeToDelete = insurancePlan.getScheme().stream()
 				.filter(scheme -> scheme.getSchemeId().equals(insuranceSchemeId)).findFirst()
 				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
-	                    "Sorry, we couldn't find an Insurance Scheme with ID: " + insuranceSchemeId));
+						"Sorry, we couldn't find an Insurance Scheme with ID: " + insuranceSchemeId));
 		schemeToDelete.setActive(false);
 		insuranceSchemeRepository.save(schemeToDelete);
 
@@ -197,13 +195,75 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 
 	@Override
 	public InsuranceSchemeResponseDto getInsuranceById(long insurancePlanId, long insuranceSchemeId) {
-		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId).orElseThrow(
-				() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
+		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
 		InsuranceScheme schemeById = insurancePlan.getScheme().stream()
 				.filter(scheme -> scheme.getSchemeId().equals(insuranceSchemeId)).findFirst()
 				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
-	                    "Sorry, we couldn't find an Insurance Scheme with ID: " + insuranceSchemeId));
+						"Sorry, we couldn't find an Insurance Scheme with ID: " + insuranceSchemeId));
 		return convertSchemeToSchemeResponseDto(schemeById);
+	}
+
+	@Override
+	public InterestCalculatorResponseDto calculateInterest(InterestCalculatorRequestDto interestCalculatorDto) {
+
+		InsuranceScheme insuranceScheme = insuranceSchemeRepository.findById(interestCalculatorDto.getSchemeId())
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Sorry, we couldn't find an Insurance Scheme with ID: " + interestCalculatorDto.getSchemeId()));
+
+		validateInvestmentAmount(interestCalculatorDto.getInvestAmount(), insuranceScheme);
+
+		validatePolicyTerm(interestCalculatorDto.getYears(), insuranceScheme);
+
+		InterestCalculatorResponseDto responseDto = new InterestCalculatorResponseDto();
+
+		long totalInstallments = calculateTotalInstallments(interestCalculatorDto.getYears(),
+				interestCalculatorDto.getMonths());
+		responseDto.setNoOfInstallments(totalInstallments);
+
+		double installmentAmount = interestCalculatorDto.getInvestAmount() / totalInstallments;
+		responseDto.setInstallmentAmount(installmentAmount);
+
+		double interestAmount = calculateInterestAmount(interestCalculatorDto.getInvestAmount(),
+				insuranceScheme.getProfitRatio());
+		responseDto.setInterestAmount(interestAmount);
+
+		double assuredAmount = interestCalculatorDto.getInvestAmount() + interestAmount;
+		responseDto.setAssuredAmount(assuredAmount);
+
+		return responseDto;
+	}
+
+	private void validateInvestmentAmount(double investAmount, InsuranceScheme schemeDetail) {
+		if (investAmount > schemeDetail.getMaxAmount() || investAmount < schemeDetail.getMinAmount()) {
+			throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Investment Amount should be between "
+					+ schemeDetail.getMinAmount() + " and " + schemeDetail.getMaxAmount());
+		}
+	}
+
+	private void validatePolicyTerm(int years, InsuranceScheme schemeDetail) {
+		if (years > schemeDetail.getMaxPolicyTerm() || years < schemeDetail.getMinPolicyTerm()) {
+			throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Policy term should be between "
+					+ schemeDetail.getMinPolicyTerm() + " and " + schemeDetail.getMaxPolicyTerm() + " years.");
+		}
+	}
+
+	private long calculateTotalInstallments(int years, int months) {
+		switch (months) {
+		case 12:
+			return years;
+		case 6:
+			return years * 2;
+		case 3:
+			return years * 4;
+		default:
+			return years * 12;
+		}
+	}
+
+	private double calculateInterestAmount(double investAmount, double profitRatio) {
+		return (profitRatio / 100) * investAmount;
 	}
 
 }
