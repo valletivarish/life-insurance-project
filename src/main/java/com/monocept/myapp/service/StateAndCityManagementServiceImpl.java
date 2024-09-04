@@ -17,6 +17,7 @@ import com.monocept.myapp.dto.StateResponseDto;
 import com.monocept.myapp.entity.City;
 import com.monocept.myapp.entity.State;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException;
 import com.monocept.myapp.repository.CityRepository;
 import com.monocept.myapp.repository.StateRepository;
 import com.monocept.myapp.util.PagedResponse;
@@ -67,10 +68,9 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 
 	@Override
 	public StateResponseDto updateState(StateRequestDto stateRequestDto) {
-		State existingState = stateRepository.findById(stateRequestDto.getId()).orElse(null);
-		if (existingState == null) {
-
-		}
+		State existingState = stateRepository.findById(stateRequestDto.getId())
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Sorry, we couldn't find a state with ID: " + stateRequestDto.getId()));
 		if (stateRequestDto.getName() != null && stateRequestDto.getName() != "") {
 			existingState.setName(stateRequestDto.getName());
 		}
@@ -80,24 +80,23 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 
 	@Override
 	public String deactivateState(long id) {
-		State existingState = stateRepository.findById(id).orElse(null);
-		if (existingState == null) {
-
-		}
+		State existingState = stateRepository.findById(id)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Sorry, we couldn't find a state with ID: " + id));
 		if (!existingState.isActive()) {
-
+			throw new GuardianLifeAssuranceException.ResourceAlreadyDeactivedException(
+					"State '" + existingState.getName() + "' is already deactivated.");
 		}
 		existingState.setActive(false);
 		stateRepository.save(existingState);
-		return "State deleted successfully";
+		return "State '" + existingState.getName() + "' has been successfully deactivated.";
 	}
 
 	@Override
 	public StateResponseDto getStateById(long id) {
-		State existingState = stateRepository.findById(id).orElse(null);
-		if (existingState == null) {
-
-		}
+		State existingState = stateRepository.findById(id)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Sorry, we couldn't find a state with ID: " + id));
 		return convertStateToStateResponseDto(existingState);
 	}
 
@@ -119,10 +118,11 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 	@Override
 	public CityResponseDto createCity(long stateId, CityRequestDto cityRequestDto) {
 		State state = stateRepository.findById(stateId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "State not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+	                    "Sorry, we couldn't find a state with ID: " + stateId));
 		City city = convertCityRequestDtoToCity(cityRequestDto);
-		if(!state.isActive()) {
-			throw new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "state is not active");
+		if (!state.isActive()) {
+			throw new GuardianLifeAssuranceException.ResourceNotActiveException("State '" + state.getName() + "' is not active.");
 		}
 		city.setState(state);
 		City createdCity = cityRepository.save(city);
@@ -141,7 +141,8 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 	@Override
 	public List<CityResponseDto> getAllCitiesByStateId(long stateId) {
 		State state = stateRepository.findById(stateId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "state not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+	                    "Sorry, we couldn't find a state with ID: " + stateId));
 		List<CityResponseDto> cities = state.getCity().stream().map(c -> convertCityToCityResponseDto(c))
 				.collect(Collectors.toList());
 
@@ -151,9 +152,11 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 	@Override
 	public CityResponseDto updateCity(Long stateId, CityRequestDto cityRequestDto) {
 		State state = stateRepository.findById(stateId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "State not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+	                    "Sorry, we couldn't find a state with ID: " + stateId));
 		City existingCity = cityRepository.findById(cityRequestDto.getId())
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "City is not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+	                    "Sorry, we couldn't find a city with ID: " + cityRequestDto.getId()));
 		if (cityRequestDto.getName() != null && cityRequestDto.getName() != "") {
 			existingCity.setName(cityRequestDto.getName());
 		}
@@ -166,19 +169,23 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 	@Override
 	public String deactivateCity(Long cityId) {
 		City existingCity = cityRepository.findById(cityId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "City not found"));
-		if (!existingCity.isActive()) {
-			throw new GuardianLifeAssuranceApiException(HttpStatus.CONFLICT, "City is already deleted");
-		}
+	            .orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+	                    "Sorry, we couldn't find a city with ID: " + cityId));
+
+	    if (!existingCity.isActive()) {
+	        throw new GuardianLifeAssuranceApiException(HttpStatus.CONFLICT, 
+	                "City '" + existingCity.getName() + "' is already deactivated.");
+	    }
 		existingCity.setActive(false);
 		cityRepository.save(existingCity);
-		return "City deleted successfully";
+		return "City '" + existingCity.getName() + "' has been successfully deactivated.";
 	}
 
 	@Override
 	public CityResponseDto getCityById(Long cityId) {
 		City city = cityRepository.findById(cityId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "city not found"));
+	            .orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+	                    "Sorry, we couldn't find a city with ID: " + cityId));
 		CityResponseDto responseDto = convertCityToCityResponseDto(city);
 		responseDto.setCity(city.getState().getName());
 		return responseDto;

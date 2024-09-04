@@ -2,7 +2,6 @@ package com.monocept.myapp.service;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.monocept.myapp.dto.AgentResponseDto;
 import com.monocept.myapp.dto.EmployeeRequestDto;
 import com.monocept.myapp.dto.EmployeeResponseDto;
 import com.monocept.myapp.entity.Document;
@@ -22,6 +20,7 @@ import com.monocept.myapp.entity.Employee;
 import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException;
 import com.monocept.myapp.repository.DocumentRepository;
 import com.monocept.myapp.repository.EmployeeRepository;
 import com.monocept.myapp.repository.RoleRepository;
@@ -73,7 +72,7 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 		employee.setSalary(employeeRequestDto.getSalary());
 		employeeRepository.save(employee);
 
-		return "Employee Registered successfully";
+		return "Employee " + employeeRequestDto.getFirstName() + " " + employeeRequestDto.getLastName() + " has been successfully registered.";
 	}
 
 	@Override
@@ -105,7 +104,7 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 	@Override
 	public EmployeeResponseDto updateEmployee(EmployeeRequestDto employeeRequestDto) {
 		Employee employee = employeeRepository.findById(employeeRequestDto.getEmployeeId())
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "employee not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find an employee with ID: " + employeeRequestDto.getEmployeeId()));
 		User user = employee.getUser();
 		if (employeeRequestDto.getEmail() != null && employeeRequestDto.getEmail() != "") {
 			user.setEmail(employeeRequestDto.getEmail());
@@ -121,9 +120,9 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 	@Override
 	public String deactivateEmployee(long employeeId) {
 		Employee employee = employeeRepository.findById(employeeId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.OK, "Employee Not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find an employee with ID: " + employeeId));
 		if (!employee.isActive()) {
-			throw new GuardianLifeAssuranceApiException(HttpStatus.CONFLICT, "Employee is already deleted");
+			throw new GuardianLifeAssuranceException.UserAlreadyDeActivatedException("Employee with ID " + employeeId + " is already deactivated.");
 		}
 		employee.setActive(false);
 		employeeRepository.save(employee);
@@ -131,25 +130,25 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 	}
 
 	@Override
-	public EmployeeResponseDto getemployeesIdById(long employeesId) {
-		Employee employee = employeeRepository.findById(employeesId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.OK, "Employee Not found"));
+	public EmployeeResponseDto getemployeesIdById(long employeeId) {
+		Employee employee = employeeRepository.findById(employeeId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find an employee with ID: " + employeeId));
 
 		return convertEmployeeToEmployeeResponseDto(employee);
 	}
 
 	public String verifyDocument(int documentId, long employeeId) {
 		Document document = documentRepository.findById(documentId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Document not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find a document with ID: " + documentId));
 
 		Employee employee = employeeRepository.findById(employeeId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Employee not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find an employee with ID: " + employeeId));
 
 		document.setVerified(true);
 		document.setVerifyBy(employee);
 		documentRepository.save(document);
 
-		return "Document verified successfully";
+		return "Document with ID " + documentId + " has been successfully verified by employee " + employee.getFirstName() + " " + employee.getLastName() + ".";
 	}
 
 }

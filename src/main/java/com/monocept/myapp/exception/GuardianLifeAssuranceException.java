@@ -14,6 +14,20 @@ public class GuardianLifeAssuranceException extends RuntimeException {
 			super(message);
 		}
 	}
+	public static class ResourceAlreadyDeactivedException extends GuardianLifeAssuranceException {
+		private static final long serialVersionUID = 1L;
+
+		public ResourceAlreadyDeactivedException(String message) {
+			super(message);
+		}
+	}
+	public static class ResourceNotActiveException extends GuardianLifeAssuranceException {
+		private static final long serialVersionUID = 1L;
+
+		public ResourceNotActiveException(String message) {
+			super(message);
+		}
+	}
 
 	public static class UserNotFoundException extends GuardianLifeAssuranceException {
 		private static final long serialVersionUID = 1L;

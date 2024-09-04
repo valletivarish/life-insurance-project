@@ -20,6 +20,7 @@ import com.monocept.myapp.entity.InsurancePlan;
 import com.monocept.myapp.entity.InsuranceScheme;
 import com.monocept.myapp.entity.SchemeDetail;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException;
 import com.monocept.myapp.repository.InsurancePlanRepository;
 import com.monocept.myapp.repository.InsuranceSchemeRepository;
 import com.monocept.myapp.repository.SchemeDetailRepository;
@@ -45,17 +46,18 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 		insurancePlan.setPlanName(insurancePlanRequestDto.getPlanName());
 		insurancePlan.setActive(insurancePlanRequestDto.isActive());
 		insurancePlanRepository.save(insurancePlan);
-		return "Insurance Plan Created Successfully";
+		return "Insurance Plan '" + insurancePlan.getPlanName() + "' has been successfully created.";
 	}
 
 	@Override
 	public String updateInsurancePlan(InsurancePlanRequestDto insurancePlanRequestDto) {
 		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanRequestDto.getPlanId())
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Insurance Plan "));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanRequestDto.getPlanId()));
 		insurancePlan.setPlanName(insurancePlanRequestDto.getPlanName());
 		insurancePlan.setActive(insurancePlanRequestDto.isActive());
 		insurancePlanRepository.save(insurancePlan);
-		return "Insurance Plan Updated Successfully";
+		return "Insurance Plan '" + insurancePlan.getPlanName() + "' has been successfully updated.";
 	}
 
 	@Override
@@ -82,19 +84,19 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 	}
 
 	@Override
-	public String deactivateInsurancePlan(long insuranceTypeId) {
-		InsurancePlan insurancePlan = insurancePlanRepository.findById(insuranceTypeId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Insurance Plan "));
+	public String deactivateInsurancePlan(long insurancePlanId) {
+		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
 		insurancePlan.setActive(false);
 		insurancePlanRepository.save(insurancePlan);
-		return "Insurance Plan deleted Successfully";
+		return "Insurance Plan '" + insurancePlan.getPlanName() + "' has been successfully deactivated.";
 	}
 
 	@Override
 	public String createInsuranceScheme(long insurancePlanId, MultipartFile multipartFile,
 			InsuranceSchemeRequestDto requestDto) throws IOException {
 		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId).orElseThrow(
-				() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Insurance plan not found"));
+				() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
 		InsuranceScheme insuranceScheme = new InsuranceScheme();
 		SchemeDetail schemeDetail = new SchemeDetail();
 		schemeDetail.setSchemeImage(ImageUtil.compressFile(multipartFile.getBytes()));
@@ -125,7 +127,7 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 	@Override
 	public List<InsuranceSchemeResponseDto> getAllInsuranceSchemes(long insurancePlanId) {
 		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId).orElseThrow(
-				() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Insurance Plan not found"));
+				() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
 		List<InsuranceSchemeResponseDto> schemes = insurancePlan.getScheme().stream()
 				.map(scheme -> convertSchemeToSchemeResponseDto(scheme)).collect(Collectors.toList());
 		return schemes;
@@ -156,9 +158,10 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 	public String updateInsuranceScheme(long insurancePlanId, MultipartFile multipartFile,
 			InsuranceSchemeRequestDto requestDto) throws IOException {
 		insurancePlanRepository.findById(insurancePlanId).orElseThrow(
-				() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Insurance plan not found"));
+				() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
 		InsuranceScheme insuranceScheme = insuranceSchemeRepository.findById(requestDto.getSchemeId()).orElseThrow(
-				() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Insurance Scheme not found"));
+				() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+	                    "Sorry, we couldn't find an Insurance Scheme with ID: " + requestDto.getSchemeId()));
 		SchemeDetail schemeDetail = insuranceScheme.getSchemeDetail();
 		schemeDetail.setDescription(requestDto.getDetailDescription());
 		schemeDetail.setInstallmentCommRatio(requestDto.getInstallmentCommRatio());
@@ -177,28 +180,30 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 		insuranceScheme.setSchemeName(requestDto.getSchemeName());
 		insuranceSchemeRepository.save(insuranceScheme);
 
-		return "Insurance Scheme updated Successfully";
+		return "Insurance Scheme '" + insuranceScheme.getSchemeName() + "' has been successfully updated.";
 	}
 
 	@Override
 	public String deleteInsuranceScheme(long insurancePlanId, long insuranceSchemeId) {
-		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId).orElseThrow(()->new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Insurance Plan not found"));
+		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId).orElseThrow(
+				() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
 		InsuranceScheme schemeToDelete = insurancePlan.getScheme().stream()
-		        .filter(scheme -> scheme.getSchemeId().equals(insuranceSchemeId))
-		        .findFirst()
-		        .orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Insurance Scheme not found"));
+				.filter(scheme -> scheme.getSchemeId().equals(insuranceSchemeId)).findFirst()
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+	                    "Sorry, we couldn't find an Insurance Scheme with ID: " + insuranceSchemeId));
 		schemeToDelete.setActive(false);
 		insuranceSchemeRepository.save(schemeToDelete);
-		return "Insurance Scheme Deleted Successfully";
+		return "Insurance Scheme '" + schemeToDelete.getSchemeName() + "' has been successfully deactivated.";
 	}
 
 	@Override
 	public InsuranceSchemeResponseDto getInsuranceById(long insurancePlanId, long insuranceSchemeId) {
-		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId).orElseThrow(()->new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Insurance Plan not found"));
+		InsurancePlan insurancePlan = insurancePlanRepository.findById(insurancePlanId).orElseThrow(
+				() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find an Insurance Plan with ID: " + insurancePlanId));
 		InsuranceScheme schemeById = insurancePlan.getScheme().stream()
-		        .filter(scheme -> scheme.getSchemeId().equals(insuranceSchemeId))
-		        .findFirst()
-		        .orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Insurance Scheme not found"));
+				.filter(scheme -> scheme.getSchemeId().equals(insuranceSchemeId)).findFirst()
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+	                    "Sorry, we couldn't find an Insurance Scheme with ID: " + insuranceSchemeId));
 		return convertSchemeToSchemeResponseDto(schemeById);
 	}
 
