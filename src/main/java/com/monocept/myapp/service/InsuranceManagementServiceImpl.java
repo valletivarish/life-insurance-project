@@ -189,6 +189,7 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 		        .orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Insurance Scheme not found"));
 		schemeToDelete.setActive(false);
 		insuranceSchemeRepository.save(schemeToDelete);
+		System.out.println("updated");
 		return "Insurance Scheme Deleted Successfully";
 	}
 
