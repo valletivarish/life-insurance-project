@@ -78,6 +78,7 @@ public class SharedResourcesController {
 	@Operation(summary = "create agent", description = "creating agent")
 	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
 	public ResponseEntity<String> createAgent(@RequestBody AgentRequestDto agentRequestDto) {
+		System.out.println("inside get All Cities");
 		return new ResponseEntity<String>(agentManagementService.createAgent(agentRequestDto), HttpStatus.CREATED);
 	}
 
