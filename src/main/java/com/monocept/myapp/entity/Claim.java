@@ -28,7 +28,7 @@ public class Claim {
 
     @OneToOne
     @JoinColumn(name = "policyNo")
-    private InsurancePolicy policy;
+    private PolicyAccount policy;
 
     @Column(name = "claimAmount")
     private double claimAmount;

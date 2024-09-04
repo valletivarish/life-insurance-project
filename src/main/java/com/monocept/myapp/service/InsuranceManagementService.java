@@ -9,6 +9,8 @@ import com.monocept.myapp.dto.InsurancePlanRequestDto;
 import com.monocept.myapp.dto.InsurancePlanResponseDto;
 import com.monocept.myapp.dto.InsuranceSchemeRequestDto;
 import com.monocept.myapp.dto.InsuranceSchemeResponseDto;
+import com.monocept.myapp.dto.InterestCalculatorRequestDto;
+import com.monocept.myapp.dto.InterestCalculatorResponseDto;
 import com.monocept.myapp.util.PagedResponse;
 
 public interface InsuranceManagementService {
@@ -32,6 +34,8 @@ public interface InsuranceManagementService {
 	String deleteInsuranceScheme(long insurancePlanId, long insuranceSchemeId);
 
 	InsuranceSchemeResponseDto getInsuranceById(long insurancePlanId, long insuranceSchemeId);
+
+	InterestCalculatorResponseDto calculateInterest(InterestCalculatorRequestDto interestCalculatorDto);
 
 
 

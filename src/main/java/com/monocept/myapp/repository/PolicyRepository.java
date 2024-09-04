@@ -5,12 +5,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.monocept.myapp.entity.Customer;
-import com.monocept.myapp.entity.Query;
+import com.monocept.myapp.entity.PolicyAccount;
 
-public interface QueryRepository extends JpaRepository<Query, Long> {
+public interface PolicyRepository extends JpaRepository<PolicyAccount, Long> {
 
-	Page<Query> findByCustomer(Customer customer, PageRequest pageRequest);
-
-	Page<Query> findAllByResolvedFalse(PageRequest pageRequest);
+	Page<PolicyAccount> findAllByCustomer(PageRequest pageRequest, Customer customer);
 
 }

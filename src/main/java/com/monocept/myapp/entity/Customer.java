@@ -35,15 +35,13 @@ public class Customer {
     private String phoneNumber;
     
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH})
-    private List<InsurancePolicy> policies;
+    private List<PolicyAccount> policies;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH})
     private List<Query> queries;
 
     @Column
     private boolean active = false;
-    
-    private boolean verified=false;
      
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "addressId")

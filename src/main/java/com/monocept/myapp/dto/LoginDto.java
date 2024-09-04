@@ -15,9 +15,4 @@ public class LoginDto {
 
     @NotBlank(message = "Password is required")
     private String password;
-
-    @Override
-    public String toString() {
-        return "LoginDto [usernameOrEmail=" + usernameOrEmail + ", password=" + password + "]";
-    }
 }
