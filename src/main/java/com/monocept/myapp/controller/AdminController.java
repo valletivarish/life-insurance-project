@@ -123,7 +123,6 @@ public class AdminController {
 	@GetMapping("/states/{stateId}/cities")
 	@Operation(summary = "Get all cities for a state", description = "Retrieve all cities for a specific state by the state ID")
 	public ResponseEntity<List<CityResponseDto>> getAllCities(@PathVariable long stateId) {
-		System.out.println("inside get All Cities");
 		return new ResponseEntity<List<CityResponseDto>>(stateAndCityManagementService.getAllCitiesByStateId(stateId),
 				HttpStatus.OK);
 	}
