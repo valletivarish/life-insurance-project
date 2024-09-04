@@ -29,6 +29,7 @@ import com.monocept.myapp.entity.Query;
 import com.monocept.myapp.entity.State;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException;
 import com.monocept.myapp.repository.AddressRepository;
 import com.monocept.myapp.repository.CustomerRepository;
 import com.monocept.myapp.repository.DocumentRepository;
@@ -119,15 +120,16 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 	@Override
 	public String updateCustomer(CustomerRequestDto customerRequestDto) {
 		Customer customer = customerRepository.findById(customerRequestDto.getCustomerId())
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Customer Not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find a customer with ID: " + customerRequestDto.getCustomerId()));
 		convertCustomerRequestDtoToCustomer(customerRequestDto, customer);
-		return "Customer Updated Successfully";
+		customerRepository.save(customer);
+		return "The Customer with ID " + customerRequestDto.getCustomerId() + " has been successfully updated.";
 	}
 
 	@Override
-	public CustomerResponseDto getCustomerIdById(long customerID) {
-		Customer customer = customerRepository.findById(customerID)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.OK, "Customer Not found"));
+	public CustomerResponseDto getCustomerIdById(long customerId) {
+		Customer customer = customerRepository.findById(customerId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find a customer with ID: " + customerId));
 
 		return convertCustomerToCustomerResponseDto(customer);
 	}
@@ -148,13 +150,13 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 	@Override
 	public String deactivateCustomer(Long customerId) {
 		Customer customer = customerRepository.findById(customerId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.OK, "Customer Not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find a customer with ID: " + customerId));
 		if (!customer.isActive()) {
-			throw new GuardianLifeAssuranceApiException(HttpStatus.CONFLICT, "Customer is already deleted");
+			throw new GuardianLifeAssuranceException.UserAlreadyDeActivatedException("The customer with ID " + customerId + " is already deactivated.");
 		}
 		customer.setActive(false);
 		customerRepository.save(customer);
-		return "Customer Deleted Successfully";
+		return "The customer with ID " + customerId + " has been successfully deactivated.";
 	}
 
 	private CustomerResponseDto convertCustomerToCustomerResponseDto(Customer customer) {
@@ -173,38 +175,38 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 	@Override
 	public String uploadDocument(MultipartFile file, String documentName, long customerId) throws IOException {
 		Customer customer = customerRepository.findById(customerId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Customer not found"));
+				.orElseThrow(() ->  new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find a customer with ID: " + customerId));
 
 		Document document = new Document();
 		document.setCustomer(customer);
 		document.setContent(ImageUtil.compressFile(file.getBytes()));
 		document.setDocumentName(documentName);
 		documentRepository.save(document);
-		return "Document uploaded successfully";
+		return "Document '" + documentName + "' has been successfully uploaded for customer ID " + customerId + ".";
 	}
 
 	@Override
 	public String createCustomerQuery(long customerId, CustomerSideQueryRequestDto customerSideQueryRequestDto) {
 		Customer customer = customerRepository.findById(customerId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Customer Not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find a customer with ID: " + customerId));
 		Query query = new Query();
 		query.setCustomer(customer);
 		query.setMessage(customerSideQueryRequestDto.getMessage());
 		query.setTitle(customerSideQueryRequestDto.getTitle());
 		queryRepository.save(query);
-		return "Query Submitted Successfully";
+		return "Your query titled '" + customerSideQueryRequestDto.getTitle() + "' has been successfully submitted.";
 	}
 
 	@Override
 	public String updateCustomerQuery(long customerId, CustomerSideQueryRequestDto customerSideQueryRequestDto) {
 		customerRepository.findById(customerId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Customer Not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find a customer with ID: " + customerId));
 		Query existingQuery = queryRepository.findById(customerSideQueryRequestDto.getId())
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Query not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find a query with ID: " + customerSideQueryRequestDto.getId()));
 		existingQuery.setMessage(customerSideQueryRequestDto.getMessage());
 		existingQuery.setTitle(customerSideQueryRequestDto.getTitle());
 		queryRepository.save(existingQuery);
-		return "Query Updated Successfully";
+		return "Your query with ID " + customerSideQueryRequestDto.getId() + " has been successfully updated.";
 	}
 
 	@Override
@@ -235,18 +237,18 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 	@Override
 	public String deleteQuery(long customerId, long queryId) {
 		Customer customer = customerRepository.findById(customerId)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Customer Not found"));
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find a customer with ID: " + customerId));
 		boolean removed = customer.getQueries().removeIf(query -> query.getQueryId() == queryId);
 		if (!removed) {
-			throw new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Query Not found");
+			throw new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find a query with ID: " + queryId + " for customer ID: " + customerId);
 		}
 		customerRepository.save(customer);
-		return "Query deleted successfully";
+		return "Query with ID " + queryId + " has been successfully deleted for customer ID " + customerId + ".";
 	}
 
 	@Override
 	public String respondToQuery(long queryId,QueryReplyDto queryReplyDto) {
-		Query query = queryRepository.findById(queryId).orElseThrow(()->new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Query Not found"));
+		Query query = queryRepository.findById(queryId).orElseThrow(()->new GuardianLifeAssuranceException.ResourceNotFoundException("Sorry, we couldn't find a query with ID: " + queryId));
 		query.setResolved(true);
 		query.setResponse(queryReplyDto.getResponse());
 		return "Response to query ID " + queryId + " has been successfully recorded.";

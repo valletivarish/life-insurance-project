@@ -22,6 +22,7 @@ import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.State;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException;
 import com.monocept.myapp.repository.AddressRepository;
 import com.monocept.myapp.repository.AgentRepository;
 import com.monocept.myapp.repository.CityRepository;
@@ -59,9 +60,6 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 
 	@Override
 	public String createAgent(AgentRequestDto agentRequestDto) {
-		
-		
-
 		if (userRepository.existsByUsername(agentRequestDto.getUsername())) {
 			throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Username already exists!");
 		}
@@ -141,7 +139,7 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 	@Override
 	public String updateAgent(AgentRequestDto agentRequestDto) {
 		Agent existingAgent = agentRepository.findById(agentRequestDto.getAgentId()).orElseThrow(
-				() -> new IllegalArgumentException("Agent not found with ID: " + agentRequestDto.getAgentId()));
+				() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find an agent with ID: " + agentRequestDto.getAgentId()));
 
 		existingAgent.setFirstName(agentRequestDto.getFirstName());
 		existingAgent.setLastName(agentRequestDto.getLastName());
@@ -164,23 +162,24 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 
 		agentRepository.save(existingAgent);
 
-		return "Agent updated successfully";
+		return "Agent with ID " + agentRequestDto.getAgentId() + " has been successfully updated.";
 
 	}
 
 	@Override
 	public AgentResponseDto getAgentById(long agentId) {
-		Agent agent = agentRepository.findById(agentId).orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Agent Not found"));
+		Agent agent = agentRepository.findById(agentId).orElseThrow(
+				() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find an agent with ID: " + agentId));
 		return convertAgentToAgentResponseDto(agent);
 	}
 
 	@Override
-	public String deleteAgent(long id) {
-		Agent agent = agentRepository.findById(id)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Agent Not found"));
+	public String deleteAgent(long agentId) {
+		Agent agent = agentRepository.findById(agentId).orElseThrow(
+				() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find an agent with ID: " + agentId));
 		agent.setActive(false);
 		agentRepository.save(agent);
-		return "Agent deleted Successfully";
+		return "Agent with ID " + agentId + " has been successfully deactivated.";
 	}
 
 }
