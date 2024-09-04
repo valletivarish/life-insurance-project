@@ -1,7 +1,9 @@
 package com.monocept.myapp.controller;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.monocept.myapp.dto.AdminRequestDto;
 import com.monocept.myapp.dto.CityRequestDto;
 import com.monocept.myapp.dto.CityResponseDto;
 import com.monocept.myapp.dto.EmployeeRequestDto;
@@ -28,9 +31,17 @@ import com.monocept.myapp.dto.InsurancePlanResponseDto;
 import com.monocept.myapp.dto.InsuranceSchemeRequestDto;
 import com.monocept.myapp.dto.InsuranceSchemeResponseDto;
 import com.monocept.myapp.dto.InsuranceSettingRequestDto;
+import com.monocept.myapp.dto.RegisterDto;
 import com.monocept.myapp.dto.StateRequestDto;
 import com.monocept.myapp.dto.StateResponseDto;
 import com.monocept.myapp.dto.TaxSettingRequestDto;
+import com.monocept.myapp.entity.Role;
+import com.monocept.myapp.entity.User;
+import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
+import com.monocept.myapp.repository.AdminRepository;
+import com.monocept.myapp.repository.RoleRepository;
+import com.monocept.myapp.repository.UserRepository;
+import com.monocept.myapp.service.AdminService;
 import com.monocept.myapp.service.AgentManagementService;
 import com.monocept.myapp.service.EmployeeManagementService;
 import com.monocept.myapp.service.InsuranceManagementService;
@@ -39,6 +50,7 @@ import com.monocept.myapp.service.StateAndCityManagementService;
 import com.monocept.myapp.util.PagedResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/GuardianLifeAssurance/admin")
@@ -59,6 +71,20 @@ public class AdminController {
 
 	@Autowired
 	private InsuranceManagementService insuranceManagementService;
+	
+	@Autowired
+	private AdminService adminService;
+	
+	@PutMapping("/admin")
+    public ResponseEntity<String> updateAdmin( @RequestBody @Valid AdminRequestDto adminRequestDto) {
+        return new ResponseEntity<>(adminService.updateAdmin(adminRequestDto), HttpStatus.OK);
+    }
+	
+	
+	@DeleteMapping("admin/{adminId}")
+    public ResponseEntity<String> deleteAdmin(@PathVariable long adminId) {
+        return new ResponseEntity<>(adminService.deleteAdmin(adminId), HttpStatus.OK);
+    }
 
 	@PostMapping("/states")
 	@Operation(summary = "Create a new state", description = "Add a new state to the system")
@@ -212,7 +238,6 @@ public class AdminController {
 				HttpStatus.CREATED);
 	}
 
-	
 //
 //	public ResponseEntity<PagedResponse<InsurancePlanResponseDto>> getAllSchemes(
 //			@PathVariable(name = "insurancePlanId") long insurancePlanId) {
@@ -222,35 +247,48 @@ public class AdminController {
 
 	@GetMapping("/insurance-plans/{insurancePlanId}/insurance-scheme")
 	@Operation(summary = "Get all insurance schemes", description = "Retrieve all insurance schemes for a specific insurance plan")
-	public ResponseEntity<List<InsuranceSchemeResponseDto>> getAllSchemes(@PathVariable(name = "insurancePlanId") long insurancePlanId) {
-		return new ResponseEntity<List<InsuranceSchemeResponseDto>>(insuranceManagementService.getAllInsuranceSchemes(insurancePlanId),HttpStatus.OK);
+	public ResponseEntity<List<InsuranceSchemeResponseDto>> getAllSchemes(
+			@PathVariable(name = "insurancePlanId") long insurancePlanId) {
+		return new ResponseEntity<List<InsuranceSchemeResponseDto>>(
+				insuranceManagementService.getAllInsuranceSchemes(insurancePlanId), HttpStatus.OK);
 	}
+
 	@PutMapping("/insurance-plans/{insurancePlanId}/insurance-scheme")
 	@Operation(summary = "Update insurance scheme details", description = "Update the details of an existing insurance scheme")
-	public ResponseEntity<String> updateInsuranceScheme(@PathVariable(name = "insurancePlanId")long insurancePlanId,@RequestParam(name = "schemeImage") MultipartFile multipartFile, @ModelAttribute InsuranceSchemeRequestDto requestDto) throws IOException{
-		return new ResponseEntity<String>(insuranceManagementService.updateInsuranceScheme(insurancePlanId,multipartFile,requestDto),HttpStatus.OK);
+	public ResponseEntity<String> updateInsuranceScheme(@PathVariable(name = "insurancePlanId") long insurancePlanId,
+			@RequestParam(name = "schemeImage") MultipartFile multipartFile,
+			@ModelAttribute InsuranceSchemeRequestDto requestDto) throws IOException {
+		return new ResponseEntity<String>(
+				insuranceManagementService.updateInsuranceScheme(insurancePlanId, multipartFile, requestDto),
+				HttpStatus.OK);
 	}
+
 	@DeleteMapping("/insurance-plans/{insurancePlanId}/insurance-scheme/{insuranceSchemeId}")
 	@Operation(summary = "Deactivate an insurance scheme", description = "Mark an insurance scheme as inactive by its ID")
-	public ResponseEntity<String> deleteInsuranceScheme(@PathVariable(name = "insurancePlanId")long insurancePlanId,@PathVariable(name = "insuranceSchemeId")long insuranceSchemeId){
-		return new ResponseEntity<String>(insuranceManagementService.deleteInsuranceScheme(insurancePlanId,insuranceSchemeId),HttpStatus.OK);
-		
+	public ResponseEntity<String> deleteInsuranceScheme(@PathVariable(name = "insurancePlanId") long insurancePlanId,
+			@PathVariable(name = "insuranceSchemeId") long insuranceSchemeId) {
+		return new ResponseEntity<String>(
+				insuranceManagementService.deleteInsuranceScheme(insurancePlanId, insuranceSchemeId), HttpStatus.OK);
+
 	}
+
 	@GetMapping("/insurance-plans/{insurancePlanId}/insurance-scheme/{insuranceSchemeId}")
 	@Operation(summary = "Get insurance scheme by ID", description = "Retrieve a specific insurance scheme by its ID")
-	public ResponseEntity<InsuranceSchemeResponseDto> getInsuranceSchemeById(@PathVariable(name = "insurancePlanId")long insurancePlanId,@PathVariable(name = "insuranceSchemeId")long insuranceSchemeId){
-		return new ResponseEntity<InsuranceSchemeResponseDto>(insuranceManagementService.getInsuranceById(insurancePlanId,insuranceSchemeId),HttpStatus.OK);
-		
+	public ResponseEntity<InsuranceSchemeResponseDto> getInsuranceSchemeById(
+			@PathVariable(name = "insurancePlanId") long insurancePlanId,
+			@PathVariable(name = "insuranceSchemeId") long insuranceSchemeId) {
+		return new ResponseEntity<InsuranceSchemeResponseDto>(
+				insuranceManagementService.getInsuranceById(insurancePlanId, insuranceSchemeId), HttpStatus.OK);
+
 	}
+
 	@PostMapping("/insurance-setting")
 	@Operation(summary = "Create a new insurance setting", description = "Add a new insurance setting to the system")
-	public ResponseEntity<String> createInsuranceSetting(@RequestBody InsuranceSettingRequestDto insuranceSettingRequestDto){
-		return new ResponseEntity<String>(settingService.createInsuranceSetting(insuranceSettingRequestDto),HttpStatus.CREATED);
-		
+	public ResponseEntity<String> createInsuranceSetting(
+			@RequestBody InsuranceSettingRequestDto insuranceSettingRequestDto) {
+		return new ResponseEntity<String>(settingService.createInsuranceSetting(insuranceSettingRequestDto),
+				HttpStatus.CREATED);
+
 	}
-	
-	
-	
-	
 
 }

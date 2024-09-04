@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.monocept.myapp.dto.CustomerRequestDto;
@@ -16,6 +17,7 @@ import com.monocept.myapp.dto.LoginDto;
 import com.monocept.myapp.dto.RegisterDto;
 import com.monocept.myapp.service.AuthService;
 import com.monocept.myapp.service.CustomerManagementService;
+import com.monocept.myapp.service.EmailService;
 
 
 @RestController
@@ -33,7 +35,8 @@ public class AuthController {
     @Autowired
 	private CustomerManagementService customerManagementService;
 	
-
+    @Autowired
+	private EmailService emailService;
 	@PostMapping("/customer-registration")
 	public ResponseEntity<String> createCustomer(@RequestBody CustomerRequestDto customerRequestDto){
 		return new ResponseEntity<String>(customerManagementService.createCustomer(customerRequestDto),HttpStatus.CREATED);
@@ -67,4 +70,12 @@ public class AuthController {
         String response = authService.register(registerDto);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
+    
+    @PostMapping("/forgot-password")
+	public ResponseEntity<String> sendOtpForForgetPassword(@RequestParam("usernameOrEmail") String usernameOrEmail) {
+		String response = emailService.sendOtpForForgetPassword(usernameOrEmail);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 }
+
+
