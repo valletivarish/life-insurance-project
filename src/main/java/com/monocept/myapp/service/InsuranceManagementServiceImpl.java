@@ -112,6 +112,8 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 		insuranceScheme.setDescription(requestDto.getDescription());
 		insuranceScheme.setSchemeName(requestDto.getSchemeName());
 		insuranceScheme.setInsurancePlan(insurancePlan);
+		
+		insuranceScheme.setRequiredDocuments(requestDto.getRequiredDocuments());
 		insuranceSchemeRepository.save(insuranceScheme);
 		List<InsuranceScheme> schemes = insurancePlan.getScheme();
 		schemes.add(insuranceScheme);

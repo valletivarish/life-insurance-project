@@ -104,6 +104,8 @@ public class ClaimServiceImpl implements ClaimService {
 		}
 
 		Claim claim = new Claim();
+		policyAccount.setClaims(claim);
+		policyRepository.save(policyAccount);
 		claim.setPolicy(policyAccount);
 		claim.setClaimAmount(claimRequestDto.getClaimAmount());
 		claim.setBankName(claimRequestDto.getBankName());

@@ -21,6 +21,8 @@ public class Admin {
     @Column
     private long adminId;
     
+    private String name;
+    
 
     @Column
     private boolean active = true;
