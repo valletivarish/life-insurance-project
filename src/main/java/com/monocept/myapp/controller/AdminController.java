@@ -1,9 +1,7 @@
 package com.monocept.myapp.controller;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.monocept.myapp.dto.AdminRequestDto;
+import com.monocept.myapp.dto.AdminResponseDto;
 import com.monocept.myapp.dto.CityRequestDto;
 import com.monocept.myapp.dto.CityResponseDto;
 import com.monocept.myapp.dto.EmployeeRequestDto;
@@ -31,16 +30,9 @@ import com.monocept.myapp.dto.InsurancePlanResponseDto;
 import com.monocept.myapp.dto.InsuranceSchemeRequestDto;
 import com.monocept.myapp.dto.InsuranceSchemeResponseDto;
 import com.monocept.myapp.dto.InsuranceSettingRequestDto;
-import com.monocept.myapp.dto.RegisterDto;
 import com.monocept.myapp.dto.StateRequestDto;
 import com.monocept.myapp.dto.StateResponseDto;
 import com.monocept.myapp.dto.TaxSettingRequestDto;
-import com.monocept.myapp.entity.Role;
-import com.monocept.myapp.entity.User;
-import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
-import com.monocept.myapp.repository.AdminRepository;
-import com.monocept.myapp.repository.RoleRepository;
-import com.monocept.myapp.repository.UserRepository;
 import com.monocept.myapp.service.AdminService;
 import com.monocept.myapp.service.AgentManagementService;
 import com.monocept.myapp.service.EmployeeManagementService;
@@ -71,20 +63,42 @@ public class AdminController {
 
 	@Autowired
 	private InsuranceManagementService insuranceManagementService;
-	
+
 	@Autowired
 	private AdminService adminService;
+
+	@PutMapping
+	public ResponseEntity<String> updateAdmin(@RequestBody @Valid AdminRequestDto adminRequestDto) {
+		return new ResponseEntity<>(adminService.updateAdmin(adminRequestDto), HttpStatus.OK);
+	}
+
+	@DeleteMapping("/{adminId}")
+	public ResponseEntity<String> deleteAdmin(@PathVariable long adminId) {
+		return new ResponseEntity<>(adminService.deleteAdmin(adminId), HttpStatus.OK);
+	}
+	@GetMapping("/{adminId}")
+	public ResponseEntity<AdminResponseDto> getAdmin(@PathVariable long adminId) {
+		return new ResponseEntity<>(adminService.getAdmin(adminId), HttpStatus.OK);
+	}
+
+	@PostMapping
+	public ResponseEntity<String> addAdmin(@RequestBody @Valid AdminRequestDto adminRequestDto) {
+		return new ResponseEntity<String>(adminService.addAdmin(adminRequestDto), HttpStatus.OK);
+	}
+
+	@PutMapping("/activate/{adminId}")
+	public ResponseEntity<String> activateAdmin(@PathVariable(name = "adminId") long adminId) {
+		return new ResponseEntity<String>(adminService.activateAdmin(adminId), HttpStatus.OK);
+	}
+
+	@GetMapping
+	public ResponseEntity<PagedResponse<AdminResponseDto>> getAllAdmin(@RequestParam(name = "page", defaultValue = "0") int page,
+			@RequestParam(name = "size", defaultValue = "5") int size,
+			@RequestParam(name = "sortBy", defaultValue = "adminId") String sortBy,
+			@RequestParam(name = "direction", defaultValue = "asc") String direction) {
+		return new ResponseEntity<PagedResponse<AdminResponseDto>>(adminService.getAllAdmin(page,size,sortBy,direction), HttpStatus.OK);
+	}
 	
-	@PutMapping("/admin")
-    public ResponseEntity<String> updateAdmin( @RequestBody @Valid AdminRequestDto adminRequestDto) {
-        return new ResponseEntity<>(adminService.updateAdmin(adminRequestDto), HttpStatus.OK);
-    }
-	
-	
-	@DeleteMapping("admin/{adminId}")
-    public ResponseEntity<String> deleteAdmin(@PathVariable long adminId) {
-        return new ResponseEntity<>(adminService.deleteAdmin(adminId), HttpStatus.OK);
-    }
 
 	@PostMapping("/states")
 	@Operation(summary = "Create a new state", description = "Add a new state to the system")
@@ -123,6 +137,16 @@ public class AdminController {
 				stateAndCityManagementService.getAllStates(page, size, sortBy, direction), HttpStatus.OK);
 
 	}
+	@PutMapping("states/activate/{stateId}")
+	@Operation(summary = "activate state by ID", description = "activate a specific state by its ID")
+	public ResponseEntity<String> activateStateById(@PathVariable(name = "stateId") long id) {
+		return new ResponseEntity<String>(stateAndCityManagementService.activateStateById(id), HttpStatus.OK);
+	}
+	@PutMapping("states/{stateId}/cities/activate/{cityId}")
+	@Operation(summary = "activate city by ID", description = "activate a specific city by its ID")
+	public ResponseEntity<String> activateCityById(@PathVariable(name = "stateId") long stateId,@PathVariable(name = "cityId") long cityId) {
+		return new ResponseEntity<String>(stateAndCityManagementService.activateCityById(stateId,cityId), HttpStatus.OK);
+	}
 
 	@PostMapping("states/{stateId}/cities")
 	@Operation(summary = "Create a new city", description = "Add a new city to a specific state")
@@ -142,7 +166,7 @@ public class AdminController {
 
 	@DeleteMapping("states/{stateId}/cities/{cityId}")
 	@Operation(summary = "Deactivate a city", description = "Mark a city as inactive by its ID")
-	public ResponseEntity<String> deactivateCity(@PathVariable Long cityId) {
+	public ResponseEntity<String> deactivateCity(@PathVariable long cityId) {
 		return new ResponseEntity<String>(stateAndCityManagementService.deactivateCity(cityId), HttpStatus.OK);
 	}
 

@@ -11,7 +11,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.monocept.myapp.dto.OtpForgetPasswordRequest;
+import com.monocept.myapp.dto.ForgetPasswordRequestDto;
+import com.monocept.myapp.dto.ResetPasswordRequestDto;
 import com.monocept.myapp.entity.OtpEntity;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
@@ -80,7 +81,7 @@ public class EmailServiceImpl implements EmailService {
 	}
 
 	@Transactional
-	public String verifyOtpAndSetNewPassword(OtpForgetPasswordRequest forgetPasswordRequest) {
+	public String verifyOtpAndSetNewPassword(ResetPasswordRequestDto forgetPasswordRequest) {
 		String username = forgetPasswordRequest.getUsernameOrEmail();
 		Optional<User> oUser = userRepository.findByUsernameOrEmail(username, username);
 		if (oUser.isEmpty()) {
@@ -105,4 +106,6 @@ public class EmailServiceImpl implements EmailService {
 
 		return "Password updated successfully";
 	}
+
+
 }

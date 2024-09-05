@@ -1,11 +1,11 @@
 package com.monocept.myapp.service;
 
-import com.monocept.myapp.dto.OtpForgetPasswordRequest;
+import com.monocept.myapp.dto.ResetPasswordRequestDto;
 
 public interface EmailService {
 
-	String sendOtpForForgetPassword(String usernameOrEmail);
+	String sendOtpForForgetPassword(String userNameOrEmail);
 
-	String verifyOtpAndSetNewPassword(OtpForgetPasswordRequest forgetPasswordRequest);
+	String verifyOtpAndSetNewPassword(ResetPasswordRequestDto forgetPasswordRequest);
 
 }
