@@ -117,11 +117,8 @@ public class CustomerController {
 	@Operation(summary = "Buy a policy for a customer", description = "Purchase a policy for a customer")
 	public ResponseEntity<Long> buyPolicy(@RequestBody PolicyAccountRequestDto accountRequestDto,
 			@PathVariable(name = "customerId") long customerId) {
-		System.out.println(accountRequestDto);
-		System.out.println(customerId);
-		return new ResponseEntity<Long>(customerManagementService.buyPolicy(accountRequestDto, customerId),
-				HttpStatus.OK);
-
+		Long policyId = customerManagementService.processPolicyPurchase(accountRequestDto, customerId);
+		return new ResponseEntity<>(policyId, HttpStatus.OK);
 	}
 
 	@PutMapping("/customers/{customerId}/query")
