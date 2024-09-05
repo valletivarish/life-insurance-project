@@ -1,6 +1,7 @@
 package com.monocept.myapp.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -147,4 +148,23 @@ public class ClaimServiceImpl implements ClaimService {
 
 		return claims.stream().map(this::convertEntityToDto).collect(Collectors.toList());
 	}
+
+	@Override
+	public String approveClaim(Long claimId) {
+		Claim claim = claimRepository.findById(claimId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException("Claim not found with ID: " + claimId));
+	
+		claim.setStatus(ClaimStatus.APPROVED);
+		claimRepository.save(claim);
+		return "Claim approved successfully";
+	}
+
+	public String rejectClaim(Long claimId) {
+		Claim claim = claimRepository.findById(claimId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException("Claim not found with ID: " + claimId));
+		claim.setStatus(ClaimStatus.REJECTED);
+		claimRepository.save(claim);
+		return "Claim Rejected successfully";
+	}
+
 }
