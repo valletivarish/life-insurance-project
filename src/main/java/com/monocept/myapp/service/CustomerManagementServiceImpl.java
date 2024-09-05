@@ -1,6 +1,7 @@
 package com.monocept.myapp.service;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,25 +29,31 @@ import com.monocept.myapp.entity.Agent;
 import com.monocept.myapp.entity.City;
 import com.monocept.myapp.entity.Customer;
 import com.monocept.myapp.entity.Document;
+import com.monocept.myapp.entity.Installment;
 import com.monocept.myapp.entity.InsuranceScheme;
+import com.monocept.myapp.entity.InsuranceSetting;
 import com.monocept.myapp.entity.PolicyAccount;
 import com.monocept.myapp.entity.Query;
 import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.State;
+import com.monocept.myapp.entity.TaxSetting;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.enums.DocumentType;
-import com.monocept.myapp.enums.PremiumType;
+import com.monocept.myapp.enums.InstallmentStatus;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
 import com.monocept.myapp.repository.AddressRepository;
 import com.monocept.myapp.repository.AgentRepository;
 import com.monocept.myapp.repository.CustomerRepository;
 import com.monocept.myapp.repository.DocumentRepository;
+import com.monocept.myapp.repository.InstallmentRepository;
 import com.monocept.myapp.repository.InsuranceSchemeRepository;
+import com.monocept.myapp.repository.InsuranceSettingRepository;
 import com.monocept.myapp.repository.PolicyRepository;
 import com.monocept.myapp.repository.QueryRepository;
 import com.monocept.myapp.repository.RoleRepository;
 import com.monocept.myapp.repository.StateRepository;
+import com.monocept.myapp.repository.TaxSettingRepository;
 import com.monocept.myapp.repository.UserRepository;
 import com.monocept.myapp.util.ImageUtil;
 import com.monocept.myapp.util.PagedResponse;
@@ -85,9 +92,16 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 
 	@Autowired
 	private PolicyRepository policyRepository;
-	
+
 	@Autowired
 	private StripeService stripeService;
+
+	@Autowired
+	private InstallmentRepository installmentRepository;
+	@Autowired
+	private TaxSettingRepository taxSettingRepository;
+	@Autowired
+	private InsuranceSettingRepository insuranceSettingRepository;
 
 	@Override
 	public String createCustomer(CustomerRequestDto customerRequestDto) {
@@ -297,76 +311,108 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		return new PagedResponse<>(queryDtos, queryPage.getNumber(), queryPage.getSize(), queryPage.getTotalElements(),
 				queryPage.getTotalPages(), queryPage.isLast());
 	}
+
+	@Override
 	public Long processPolicyPurchase(PolicyAccountRequestDto accountRequestDto, long customerId) {
+		TaxSetting taxSetting = taxSettingRepository.findTopByOrderByUpdatedAtDesc();
+		InsuranceSetting insuranceSetting = insuranceSettingRepository.findTopByOrderByUpdatedAtDesc();
 		Customer customer = customerRepository.findById(customerId)
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 						"Sorry, we couldn't find a customer with ID: " + customerId));
-        StripeChargeDto chargeDto = new StripeChargeDto();
-        chargeDto.setStripeToken(accountRequestDto.getStripeToken());
-        chargeDto.setAmount(accountRequestDto.getPremiumAmount());
-        chargeDto.setUsername(customer.getFirstName() + " "+customer.getLastName());
-
-        StripeChargeDto paymentResponse = stripeService.chargeAndCreatePolicy(chargeDto);
-
-        if (paymentResponse.getSuccess()) {
-            return buyPolicy(accountRequestDto, customer);
-        } else {
-            throw new RuntimeException("Payment failed");
-        }
-    }
-
-	@Override
-	public Long buyPolicy(PolicyAccountRequestDto accountRequestDto, Customer customer) {
 
 		InsuranceScheme insuranceScheme = insuranceSchemeRepository.findById(accountRequestDto.getInsuranceSchemeId())
 				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
 						"Sorry, we couldn't find a scheme with ID: " + accountRequestDto.getInsuranceSchemeId()));
+
+		List<DocumentType> requiredDocuments = insuranceScheme.getRequiredDocuments();
+		List<Document> customerDocuments = customer.getDocuments();
+
+		for (DocumentType requiredDoc : requiredDocuments) {
+			boolean hasRequiredDoc = customerDocuments.stream().anyMatch(
+					doc -> requiredDoc.name().equalsIgnoreCase(doc.getDocumentName().name()) && doc.isVerified());
+
+			if (!hasRequiredDoc) {
+				throw new GuardianLifeAssuranceException.DocumentNotVerifiedException(
+						"The customer has not submitted or verified the required document: " + requiredDoc.name());
+			}
+		}
+
+		long months;
+		switch (accountRequestDto.getPremiumType()) {
+		case MONTHLY:
+			months = 1;
+			break;
+		case QUARTERLY:
+			months = 3;
+			break;
+		case HALF_YEARLY:
+			months = 6;
+			break;
+		default:
+			months = 12;
+			break;
+		}
+
+		double premiumAmount = accountRequestDto.getPremiumAmount();
+		long totalMonths = (accountRequestDto.getPolicyTerm() * 12) / months;
+		double installmentAmount = (premiumAmount / totalMonths) * (taxSetting.getTaxPercentage() / 100)
+				+ (premiumAmount / totalMonths);
+
+		StripeChargeDto chargeDto = new StripeChargeDto();
+		chargeDto.setStripeToken(accountRequestDto.getStripeToken());
+		chargeDto.setAmount(installmentAmount);
+		chargeDto.setUsername(customer.getFirstName() + " " + customer.getLastName());
+
+		StripeChargeDto paymentResponse = stripeService.chargeAndCreatePolicy(chargeDto);
+
+		if (!paymentResponse.getSuccess()) {
+			throw new RuntimeException("Payment failed for the first installment");
+		}
+
 		PolicyAccount policyAccount = new PolicyAccount();
 		if (accountRequestDto.getAgentId() != 0) {
 			Agent agent = agentRepository.findById(accountRequestDto.getAgentId())
 					.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
-							"Sorry, we couldn't find a agent with ID: " + accountRequestDto.getAgentId()));
-			agent.setTotalCommission(agent.getTotalCommission()+insuranceScheme.getRegistrationCommRatio());
+							"Sorry, we couldn't find an agent with ID: " + accountRequestDto.getAgentId()));
+			agent.setTotalCommission(agent.getTotalCommission() + insuranceScheme.getRegistrationCommRatio());
 			agentRepository.save(agent);
 			policyAccount.setAgent(agent);
-			
 		}
-
-		List<DocumentType> requiredDocuments = insuranceScheme.getRequiredDocuments();
-	    List<Document> customerDocuments = customer.getDocuments();
-
-	    for (DocumentType requiredDoc : requiredDocuments) {
-	        boolean hasRequiredDoc = customerDocuments.stream()
-	            .anyMatch(doc -> doc.getDocumentName().equals(requiredDoc.name()) && doc.isVerified());
-
-	        if (!hasRequiredDoc) {
-	            throw new GuardianLifeAssuranceException.DocumentNotVerifiedException(
-	                "The customer has not submitted or verified the required document: " + requiredDoc);
-	        }
-	    }
 
 		policyAccount.setCustomer(customer);
 		policyAccount.setPremiumType(accountRequestDto.getPremiumType());
 		policyAccount.setPolicyTerm(accountRequestDto.getPolicyTerm());
-		policyAccount.setPremiumAmount(accountRequestDto.getPremiumAmount());
+		policyAccount.setPremiumAmount(premiumAmount);
 		policyAccount.setMaturityDate(policyAccount.getIssueDate().plusYears(accountRequestDto.getPolicyTerm()));
-		policyAccount.setSumAssured((policyAccount.getPremiumAmount() * (insuranceScheme.getProfitRatio() / 100))
-				+ policyAccount.getPremiumAmount());
-		long months;
-		if (policyAccount.getPremiumType().equals(PremiumType.MONTHLY)) {
-			months = 1;
-		} else if (policyAccount.getPremiumType().equals(PremiumType.QUARTERLY)) {
-			months = 3;
-		} else if (policyAccount.getPremiumType().equals(PremiumType.HALF_YEARLY)) {
-			months = 6;
-		} else {
-			months = 12;
-		}
-		double amount = policyAccount.getPremiumAmount();
-		long totalMonths = (policyAccount.getPolicyTerm() * 12) / months;
-		policyAccount.setInstallmentAmount(amount / totalMonths);
-		policyAccount.setTotalPaidAmount(0.0);
+		policyAccount.setSumAssured((premiumAmount * (insuranceScheme.getProfitRatio() / 100)) + premiumAmount);
+		policyAccount.setInstallmentAmount(installmentAmount);
+		policyAccount.setTotalPaidAmount(installmentAmount);
+		policyAccount.setInsuranceScheme(insuranceScheme);
+
+		policyAccount.setInsuranceSetting(insuranceSetting);
+		policyAccount.setTaxSetting(taxSetting);
+
 		PolicyAccount savedPolicy = policyRepository.save(policyAccount);
+
+		LocalDate startDate = LocalDate.now();
+		Installment firstInstallment = new Installment();
+		firstInstallment.setInsurancePolicy(savedPolicy);
+		firstInstallment.setDueDate(startDate);
+		firstInstallment.setAmountDue(installmentAmount);
+		firstInstallment.setAmountPaid(installmentAmount);
+		firstInstallment.setPaymentDate(startDate);
+		firstInstallment.setStatus(InstallmentStatus.PAID);
+		installmentRepository.save(firstInstallment);
+
+		for (int i = 1; i < totalMonths; i++) {
+			Installment installment = new Installment();
+			installment.setInsurancePolicy(savedPolicy);
+			installment.setDueDate(startDate.plusMonths(i * months));
+			installment.setAmountDue(installmentAmount);
+			installment.setStatus(InstallmentStatus.PENDING);
+			installmentRepository.save(installment);
+		}
+
 		return savedPolicy.getPolicyNo();
 	}
 
@@ -418,11 +464,9 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		Customer customer = customerRepository.findById(customerId)
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 						"Sorry, we couldn't find a customer with ID: " + customerId));
-		 PolicyAccount policy = customer.getPolicies().stream()
-		            .filter(p -> p.getPolicyNo() == policyId)
-		            .findFirst()
-		            .orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
-		                    "Sorry, we couldn't find a policy with ID: " + policyId));
+		PolicyAccount policy = customer.getPolicies().stream().filter(p -> p.getPolicyNo() == policyId).findFirst()
+				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Sorry, we couldn't find a policy with ID: " + policyId));
 		return convertPolicyToPolicyResponseDto(policy);
 	}
 

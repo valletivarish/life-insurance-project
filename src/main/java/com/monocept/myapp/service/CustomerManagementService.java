@@ -11,7 +11,6 @@ import com.monocept.myapp.dto.PolicyAccountRequestDto;
 import com.monocept.myapp.dto.PolicyAccountResponseDto;
 import com.monocept.myapp.dto.QueryReplyDto;
 import com.monocept.myapp.dto.QueryResponseDto;
-import com.monocept.myapp.entity.Customer;
 import com.monocept.myapp.enums.DocumentType;
 import com.monocept.myapp.util.PagedResponse;
 
@@ -41,7 +40,7 @@ public interface CustomerManagementService {
 
 	PagedResponse<QueryResponseDto> getAllQueries(int page, int size, String sortBy, String direction);
 
-	Long buyPolicy(PolicyAccountRequestDto accountRequestDto, Customer customer);
+//	Long buyPolicy(PolicyAccountRequestDto accountRequestDto, Customer customer,InsuranceScheme insuranceScheme);
 
 	PagedResponse<PolicyAccountResponseDto> getAllPoliciesByCustomerId(long customerId, int page, int size, String sortBy,
 			String direction);

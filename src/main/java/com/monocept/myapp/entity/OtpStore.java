@@ -8,7 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 @Entity
-public class OtpEntity {
+public class OtpStore {
 	 @Id
 	    @GeneratedValue(strategy = GenerationType.IDENTITY)
 	    private Long id;
@@ -23,10 +23,10 @@ public class OtpEntity {
 	    private LocalDateTime expirationTime;
 
 	   
-	    public OtpEntity() {}
+	    public OtpStore() {}
 
 	   
-	    public OtpEntity(String username, String otp, LocalDateTime expirationTime) {
+	    public OtpStore(String username, String otp, LocalDateTime expirationTime) {
 	        this.username = username;
 	        this.otp = otp;
 	        this.expirationTime = expirationTime;

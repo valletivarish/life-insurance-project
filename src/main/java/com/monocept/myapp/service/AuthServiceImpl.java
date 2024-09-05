@@ -81,6 +81,7 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
         if (registerDto.getRoles().contains("ROLE_ADMIN")) {
             Admin admin = new Admin();
+            admin.setName(registerDto.getName());
             admin.setUser(user);
             admin.setActive(true);
             adminRepository.save(admin);

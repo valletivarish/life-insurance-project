@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.monocept.myapp.dto.ForgetPasswordRequestDto;
 import com.monocept.myapp.dto.ResetPasswordRequestDto;
-import com.monocept.myapp.entity.OtpEntity;
+import com.monocept.myapp.entity.OtpStore;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
@@ -72,7 +72,7 @@ public class EmailServiceImpl implements EmailService {
 
 		String otp = generateOTP();
 		LocalDateTime expirationTime = LocalDateTime.now().plusMinutes(10);
-		OtpEntity otpEntity = new OtpEntity(user.getUsername(), otp, expirationTime);
+		OtpStore otpEntity = new OtpStore(user.getUsername(), otp, expirationTime);
 		otpRepository.save(otpEntity);
 
 		sendOtpEmail(user.getEmail(), otp);
@@ -89,7 +89,7 @@ public class EmailServiceImpl implements EmailService {
 		}
 		User user = oUser.get();
 
-		Optional<OtpEntity> otpEntityOptional = otpRepository.findByUsernameAndOtp(user.getUsername(),
+		Optional<OtpStore> otpEntityOptional = otpRepository.findByUsernameAndOtp(user.getUsername(),
 				forgetPasswordRequest.getOtp());
 		if (otpEntityOptional.isEmpty() || otpEntityOptional.get().getExpirationTime().isBefore(LocalDateTime.now())) {
 			throw new GuardianLifeAssuranceException("Invalid or expired OTP");
