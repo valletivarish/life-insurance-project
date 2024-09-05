@@ -4,6 +4,8 @@ import java.sql.Date;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.monocept.myapp.enums.ClaimStatus;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,9 +52,14 @@ public class Claim {
     private Date date;
 
     @Column(name = "claimStatus")
-    private String status;
+    private ClaimStatus status = ClaimStatus.PENDING;
 
     @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REFRESH})
     @JoinColumn(name = "agentId", referencedColumnName = "agentId")
     private Agent agent;
+    
+    @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REFRESH})
+    @JoinColumn(name = "customerId", referencedColumnName = "customerId")
+    private Customer customer;
+    
 }
