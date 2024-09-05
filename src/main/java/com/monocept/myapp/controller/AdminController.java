@@ -331,4 +331,10 @@ public class AdminController {
         return new ResponseEntity<String>(claimService.approveClaim(claimId),
 				HttpStatus.OK);
     }
+    
+    @PutMapping("/{claimId}/reject")
+    public ResponseEntity<String> rejectClaim(@PathVariable Long claimId) {
+        return new ResponseEntity<String>(claimService.rejectClaim(claimId),
+				HttpStatus.OK);
+    }
 }
