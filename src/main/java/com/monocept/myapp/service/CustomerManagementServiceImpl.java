@@ -22,6 +22,7 @@ import com.monocept.myapp.dto.PolicyAccountRequestDto;
 import com.monocept.myapp.dto.PolicyAccountResponseDto;
 import com.monocept.myapp.dto.QueryReplyDto;
 import com.monocept.myapp.dto.QueryResponseDto;
+import com.monocept.myapp.dto.StripeChargeDto;
 import com.monocept.myapp.entity.Address;
 import com.monocept.myapp.entity.Agent;
 import com.monocept.myapp.entity.City;
@@ -84,6 +85,9 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 
 	@Autowired
 	private PolicyRepository policyRepository;
+	
+	@Autowired
+	private StripeService stripeService;
 
 	@Override
 	public String createCustomer(CustomerRequestDto customerRequestDto) {
@@ -293,16 +297,30 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		return new PagedResponse<>(queryDtos, queryPage.getNumber(), queryPage.getSize(), queryPage.getTotalElements(),
 				queryPage.getTotalPages(), queryPage.isLast());
 	}
+	public Long processPolicyPurchase(PolicyAccountRequestDto accountRequestDto, long customerId) {
+		Customer customer = customerRepository.findById(customerId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
+						"Sorry, we couldn't find a customer with ID: " + customerId));
+        StripeChargeDto chargeDto = new StripeChargeDto();
+        chargeDto.setStripeToken(accountRequestDto.getStripeToken());
+        chargeDto.setAmount(accountRequestDto.getPremiumAmount());
+        chargeDto.setUsername(customer.getFirstName() + " "+customer.getLastName());
+
+        StripeChargeDto paymentResponse = stripeService.chargeAndCreatePolicy(chargeDto);
+
+        if (paymentResponse.getSuccess()) {
+            return buyPolicy(accountRequestDto, customer);
+        } else {
+            throw new RuntimeException("Payment failed");
+        }
+    }
 
 	@Override
-	public Long buyPolicy(PolicyAccountRequestDto accountRequestDto, long customerId) {
+	public Long buyPolicy(PolicyAccountRequestDto accountRequestDto, Customer customer) {
 
 		InsuranceScheme insuranceScheme = insuranceSchemeRepository.findById(accountRequestDto.getInsuranceSchemeId())
 				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
 						"Sorry, we couldn't find a scheme with ID: " + accountRequestDto.getInsuranceSchemeId()));
-		Customer customer = customerRepository.findById(customerId)
-				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
-						"Sorry, we couldn't find a customer with ID: " + customerId));
 		PolicyAccount policyAccount = new PolicyAccount();
 		if (accountRequestDto.getAgentId() != 0) {
 			Agent agent = agentRepository.findById(accountRequestDto.getAgentId())
