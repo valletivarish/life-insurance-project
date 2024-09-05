@@ -36,6 +36,7 @@ public class ClaimServiceImpl implements ClaimService {
 
 	@Override
 	public ClaimResponseDto createClaim(Long agentId, ClaimRequestDto claimRequestDto) {
+		System.out.println("inside claim");
 
 		Agent agent = agentRepository.findById(agentId)
 				.orElseThrow(() -> new GuardianLifeAssuranceException("Agent not found with ID: " + agentId));
