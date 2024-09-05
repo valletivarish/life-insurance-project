@@ -1,6 +1,7 @@
 package com.monocept.myapp.controller;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.monocept.myapp.dto.ClaimRequestDto;
+import com.monocept.myapp.dto.ClaimResponseDto;
 import com.monocept.myapp.dto.CustomerRequestDto;
 import com.monocept.myapp.dto.CustomerResponseDto;
 import com.monocept.myapp.dto.CustomerSideQueryRequestDto;
@@ -23,6 +26,7 @@ import com.monocept.myapp.dto.PolicyAccountRequestDto;
 import com.monocept.myapp.dto.PolicyAccountResponseDto;
 import com.monocept.myapp.dto.QueryResponseDto;
 import com.monocept.myapp.enums.DocumentType;
+import com.monocept.myapp.service.ClaimService;
 import com.monocept.myapp.service.CustomerManagementService;
 import com.monocept.myapp.util.PagedResponse;
 
@@ -33,6 +37,9 @@ import io.swagger.v3.oas.annotations.Operation;
 public class CustomerController {
 	@Autowired
 	private CustomerManagementService customerManagementService;
+
+	@Autowired
+	private ClaimService claimService;
 
 	@GetMapping("/{customerID}")
 	@Operation(summary = "Get customer details by ID", description = "Fetch customer details using customer ID")
@@ -140,5 +147,18 @@ public class CustomerController {
 	@Operation(summary = "Deactivate a customer", description = "Deactivate a customer by their ID")
 	public ResponseEntity<String> deactivateCustomer(@PathVariable Long CustomerID) {
 		return new ResponseEntity<String>(customerManagementService.deactivateCustomer(CustomerID), HttpStatus.OK);
+	}
+
+	@PostMapping("/customer/{customerId}/claimss")
+	public ResponseEntity<ClaimResponseDto> createClaim(@PathVariable Long customerId,
+			@RequestBody ClaimRequestDto claimRequestDto) {
+		ClaimResponseDto claimResponseDto = claimService.createCustomerClaim(customerId, claimRequestDto);
+		return ResponseEntity.ok(claimResponseDto);
+	}
+
+	@GetMapping("/customer/{customerId}/claims")
+	public ResponseEntity<List<ClaimResponseDto>> getClaimsByCustomerId(@PathVariable Long customerId) {
+		List<ClaimResponseDto> claims = claimService.getAllClaimsByCustomerId(customerId);
+		return new ResponseEntity<>(claims, HttpStatus.OK);
 	}
 }
