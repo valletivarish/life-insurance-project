@@ -33,8 +33,10 @@ import com.monocept.myapp.dto.InsuranceSettingRequestDto;
 import com.monocept.myapp.dto.StateRequestDto;
 import com.monocept.myapp.dto.StateResponseDto;
 import com.monocept.myapp.dto.TaxSettingRequestDto;
+import com.monocept.myapp.entity.Claim;
 import com.monocept.myapp.service.AdminService;
 import com.monocept.myapp.service.AgentManagementService;
+import com.monocept.myapp.service.ClaimService;
 import com.monocept.myapp.service.EmployeeManagementService;
 import com.monocept.myapp.service.InsuranceManagementService;
 import com.monocept.myapp.service.SettingService;
@@ -67,6 +69,9 @@ public class AdminController {
 	@Autowired
 	private AdminService adminService;
 
+	@Autowired
+	private ClaimService claimService;
+
 	@PutMapping
 	public ResponseEntity<String> updateAdmin(@RequestBody @Valid AdminRequestDto adminRequestDto) {
 		return new ResponseEntity<>(adminService.updateAdmin(adminRequestDto), HttpStatus.OK);
@@ -76,6 +81,7 @@ public class AdminController {
 	public ResponseEntity<String> deleteAdmin(@PathVariable long adminId) {
 		return new ResponseEntity<>(adminService.deleteAdmin(adminId), HttpStatus.OK);
 	}
+
 	@GetMapping("/{adminId}")
 	public ResponseEntity<AdminResponseDto> getAdmin(@PathVariable long adminId) {
 		return new ResponseEntity<>(adminService.getAdmin(adminId), HttpStatus.OK);
@@ -92,13 +98,14 @@ public class AdminController {
 	}
 
 	@GetMapping
-	public ResponseEntity<PagedResponse<AdminResponseDto>> getAllAdmin(@RequestParam(name = "page", defaultValue = "0") int page,
+	public ResponseEntity<PagedResponse<AdminResponseDto>> getAllAdmin(
+			@RequestParam(name = "page", defaultValue = "0") int page,
 			@RequestParam(name = "size", defaultValue = "5") int size,
 			@RequestParam(name = "sortBy", defaultValue = "adminId") String sortBy,
 			@RequestParam(name = "direction", defaultValue = "asc") String direction) {
-		return new ResponseEntity<PagedResponse<AdminResponseDto>>(adminService.getAllAdmin(page,size,sortBy,direction), HttpStatus.OK);
+		return new ResponseEntity<PagedResponse<AdminResponseDto>>(
+				adminService.getAllAdmin(page, size, sortBy, direction), HttpStatus.OK);
 	}
-	
 
 	@PostMapping("/states")
 	@Operation(summary = "Create a new state", description = "Add a new state to the system")
@@ -137,15 +144,19 @@ public class AdminController {
 				stateAndCityManagementService.getAllStates(page, size, sortBy, direction), HttpStatus.OK);
 
 	}
+
 	@PutMapping("states/activate/{stateId}")
 	@Operation(summary = "activate state by ID", description = "activate a specific state by its ID")
 	public ResponseEntity<String> activateStateById(@PathVariable(name = "stateId") long id) {
 		return new ResponseEntity<String>(stateAndCityManagementService.activateStateById(id), HttpStatus.OK);
 	}
+
 	@PutMapping("states/{stateId}/cities/activate/{cityId}")
 	@Operation(summary = "activate city by ID", description = "activate a specific city by its ID")
-	public ResponseEntity<String> activateCityById(@PathVariable(name = "stateId") long stateId,@PathVariable(name = "cityId") long cityId) {
-		return new ResponseEntity<String>(stateAndCityManagementService.activateCityById(stateId,cityId), HttpStatus.OK);
+	public ResponseEntity<String> activateCityById(@PathVariable(name = "stateId") long stateId,
+			@PathVariable(name = "cityId") long cityId) {
+		return new ResponseEntity<String>(stateAndCityManagementService.activateCityById(stateId, cityId),
+				HttpStatus.OK);
 	}
 
 	@PostMapping("states/{stateId}/cities")
@@ -314,5 +325,10 @@ public class AdminController {
 				HttpStatus.CREATED);
 
 	}
-
+	  
+    @PutMapping("/{claimId}/approve")
+    public ResponseEntity<String> approveClaim(@PathVariable Long claimId) {
+        return new ResponseEntity<String>(claimService.approveClaim(claimId),
+				HttpStatus.OK);
+    }
 }

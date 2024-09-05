@@ -15,4 +15,8 @@ public interface ClaimService {
 
 	List<ClaimResponseDto> getAllClaimsByCustomerId(Long customerId);
 
+	String approveClaim(Long claimId);
+
+	String rejectClaim(Long claimId);
+
 }
