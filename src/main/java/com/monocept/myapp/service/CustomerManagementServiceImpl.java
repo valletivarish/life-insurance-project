@@ -308,7 +308,10 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 			Agent agent = agentRepository.findById(accountRequestDto.getAgentId())
 					.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 							"Sorry, we couldn't find a agent with ID: " + accountRequestDto.getAgentId()));
+			agent.setTotalCommission(agent.getTotalCommission()+insuranceScheme.getRegistrationCommRatio());
+			agentRepository.save(agent);
 			policyAccount.setAgent(agent);
+			
 		}
 
 		List<DocumentType> requiredDocuments = insuranceScheme.getRequiredDocuments();

@@ -30,4 +30,8 @@ public interface StateAndCityManagementService {
 
 	CityResponseDto getCityById(Long cityId);
 
+	String activateStateById(long id);
+
+	String activateCityById(long id, long cityId);
+
 }
