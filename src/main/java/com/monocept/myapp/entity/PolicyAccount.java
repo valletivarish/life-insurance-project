@@ -1,6 +1,7 @@
 package com.monocept.myapp.entity;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class PolicyAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "policyNo")
-    private Long policyNo;
+    private long policyNo;
 
     @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REFRESH})
     @JoinColumn(name = "schemeId", referencedColumnName = "schemeId")
@@ -90,6 +91,8 @@ public class PolicyAccount {
     @ManyToOne
     @JoinColumn(name = "tax_id", referencedColumnName = "taxId")
     private TaxSetting taxSetting;
+    
+    private LocalDateTime cancellationDate;
     
     @ManyToOne
     private InsuranceSetting insuranceSetting;

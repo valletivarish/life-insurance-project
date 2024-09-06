@@ -43,4 +43,5 @@ public class Installment {
 
     @Column(name = "status")
     private InstallmentStatus status = InstallmentStatus.PENDING; 
+    private String paymentReference;
 }

@@ -1,23 +1,28 @@
 package com.monocept.myapp.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.monocept.myapp.dto.ClaimRequestDto;
 import com.monocept.myapp.dto.ClaimResponseDto;
-import com.monocept.myapp.entity.Agent;
 import com.monocept.myapp.entity.Claim;
 import com.monocept.myapp.entity.Customer;
 import com.monocept.myapp.entity.PolicyAccount;
 import com.monocept.myapp.enums.ClaimStatus;
+import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
-import com.monocept.myapp.repository.AgentRepository;
 import com.monocept.myapp.repository.ClaimRepository;
 import com.monocept.myapp.repository.CustomerRepository;
 import com.monocept.myapp.repository.PolicyRepository;
+import com.monocept.myapp.util.PagedResponse;
 
 @Service
 public class ClaimServiceImpl implements ClaimService {
@@ -26,69 +31,13 @@ public class ClaimServiceImpl implements ClaimService {
 	private ClaimRepository claimRepository;
 
 	@Autowired
-	private AgentRepository agentRepository;
-
-	@Autowired
 	private PolicyRepository policyRepository;
 
 	@Autowired
 	private CustomerRepository customerRepository;
 
-	@Override
-	public ClaimResponseDto createClaim(Long agentId, ClaimRequestDto claimRequestDto) {
-		System.out.println("inside claim");
-
-		Agent agent = agentRepository.findById(agentId)
-				.orElseThrow(() -> new GuardianLifeAssuranceException("Agent not found with ID: " + agentId));
-
-		PolicyAccount policy = policyRepository.findById(claimRequestDto.getPolicyNo())
-				.orElseThrow(() -> new GuardianLifeAssuranceException(
-						"Policy not found with PolicyNo: " + claimRequestDto.getPolicyNo()));
-
-		Claim claim = dtoToEntity(claimRequestDto, policy, agent);
-
-		claimRepository.save(claim);
-
-		return entityToDto(claim);
-	}
-
-	@Override
-	public List<ClaimResponseDto> getClaimsByAgentId(Long agentId) {
-		agentRepository.findById(agentId)
-				.orElseThrow(() -> new GuardianLifeAssuranceException("Agent not found with ID: " + agentId));
-
-		List<Claim> claims = claimRepository.findByAgentAgentId(agentId);
-
-		return claims.stream().map(this::entityToDto).collect(Collectors.toList());
-	}
-
-	public Claim dtoToEntity(ClaimRequestDto claimRequestDto, PolicyAccount policy, Agent agent) {
-		Claim claim = new Claim();
-		claim.setPolicy(policy);
-		claim.setClaimAmount(claimRequestDto.getClaimAmount());
-		claim.setBankName(claimRequestDto.getBankName());
-		claim.setBranchName(claimRequestDto.getBranchName());
-		claim.setBankAccountNumber(claimRequestDto.getBankAccountNumber());
-		claim.setIfscCode(claimRequestDto.getIfscCode());
-		claim.setStatus(ClaimStatus.PENDING);
-		claim.setAgent(agent);
-		return claim;
-	}
-
-	public ClaimResponseDto entityToDto(Claim claim) {
-		ClaimResponseDto claimResponseDto = new ClaimResponseDto();
-		claimResponseDto.setClaimId(claim.getClaimId());
-		claimResponseDto.setPolicyNo(claim.getPolicy().getPolicyNo());
-		claimResponseDto.setClaimAmount(claim.getClaimAmount());
-		claimResponseDto.setBankName(claim.getBankName());
-		claimResponseDto.setBranchName(claim.getBranchName());
-		claimResponseDto.setBankAccountNumber(claim.getBankAccountNumber());
-		claimResponseDto.setIfscCode(claim.getIfscCode());
-		claimResponseDto.setClaimDate(claim.getDate());
-		claimResponseDto.setStatus(claim.getStatus());
-		claimResponseDto.setAgentName(claim.getAgent().getFirstName() + " " + claim.getAgent().getLastName());
-		return claimResponseDto;
-	}
+	@Autowired
+	private StripeService stripeService;
 
 	@Override
 	public ClaimResponseDto createCustomerClaim(Long customerId, ClaimRequestDto claimRequestDto) {
@@ -104,40 +53,16 @@ public class ClaimServiceImpl implements ClaimService {
 		}
 
 		Claim claim = new Claim();
-		policyAccount.setClaims(claim);
-		policyRepository.save(policyAccount);
-		claim.setPolicy(policyAccount);
+		claim.setPolicyAccount(policyAccount);
 		claim.setClaimAmount(claimRequestDto.getClaimAmount());
-		claim.setBankName(claimRequestDto.getBankName());
-		claim.setBranchName(claimRequestDto.getBranchName());
-		claim.setBankAccountNumber(claimRequestDto.getBankAccountNumber());
-		claim.setIfscCode(claimRequestDto.getIfscCode());
+		claim.setClaimReason(claimRequestDto.getClaimReason());
 		claim.setStatus(ClaimStatus.PENDING);
+		claim.setClaimDate(LocalDateTime.now());
 		claim.setCustomer(customer);
 
 		Claim savedClaim = claimRepository.save(claim);
 
 		return convertEntityToDto(savedClaim);
-	}
-
-	public List<ClaimResponseDto> getClaimsByCustomerId(Long customerId) {
-		Customer customer = customerRepository.findById(customerId)
-				.orElseThrow(() -> new GuardianLifeAssuranceException("Customer not found"));
-
-		return customer.getClaims().stream().map(this::convertEntityToDto).collect(Collectors.toList());
-	}
-
-	private ClaimResponseDto convertEntityToDto(Claim claim) {
-		ClaimResponseDto dto = new ClaimResponseDto();
-		dto.setClaimId(claim.getClaimId());
-		dto.setPolicyNo(claim.getPolicy().getPolicyNo());
-		dto.setClaimAmount(claim.getClaimAmount());
-		dto.setBankName(claim.getBankName());
-		dto.setBranchName(claim.getBranchName());
-		dto.setBankAccountNumber(claim.getBankAccountNumber());
-		dto.setIfscCode(claim.getIfscCode());
-		dto.setStatus(claim.getStatus());
-		return dto;
 	}
 
 	@Override
@@ -149,4 +74,75 @@ public class ClaimServiceImpl implements ClaimService {
 
 		return claims.stream().map(this::convertEntityToDto).collect(Collectors.toList());
 	}
+
+	private ClaimResponseDto convertEntityToDto(Claim claim) {
+		ClaimResponseDto dto = new ClaimResponseDto();
+		dto.setClaimId(claim.getClaimId());
+		dto.setPolicyNo(claim.getPolicyAccount().getPolicyNo());
+		dto.setClaimAmount(claim.getClaimAmount());
+		dto.setClaimReason(claim.getClaimReason());
+		dto.setStatus(claim.getStatus());
+		return dto;
+	}
+
+	@Override
+	public String approveClaim(Long claimId) {
+	    Claim claim = claimRepository.findById(claimId)
+	            .orElseThrow(() -> new GuardianLifeAssuranceException("Claim not found"));
+
+	    if (claim.getStatus() != ClaimStatus.PENDING) {
+	        throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Claim is not in a pending state.");
+	    }
+
+	    PolicyAccount policyAccount = claim.getPolicyAccount();
+	    double sumAssured = policyAccount.getSumAssured(); 
+
+	    String stripeToken = claim.getCustomer().getStripeToken(); 
+	    if (stripeToken == null || stripeToken.isEmpty()) {
+	        throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "No Stripe token found for the customer.");
+	    }
+
+	    stripeService.processCustomerPayout(stripeToken, sumAssured);
+
+	    claim.setStatus(ClaimStatus.APPROVED);
+	    claim.setApprovalDate(LocalDateTime.now());
+	    claimRepository.save(claim);
+
+	    return "Claim approved and payout of sum assured processed.";
+	}
+
+
+	@Override
+	public String rejectClaim(Long claimId) {
+		Claim claim = claimRepository.findById(claimId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException("Claim not found"));
+
+		if (claim.getStatus() != ClaimStatus.PENDING) {
+			throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Claim is not in a pending state.");
+		}
+
+		claim.setStatus(ClaimStatus.REJECTED);
+		claim.setRejectionDate(LocalDateTime.now());
+		claimRepository.save(claim);
+
+		return "Claim rejected.";
+	}
+
+	@Override
+    public PagedResponse<ClaimResponseDto> getAllClaimsWithFilters(int page, int size, String sortBy, String direction,
+                                                                   ClaimStatus status, Long customerId, Long policyNo) {
+        Sort sort = direction.equalsIgnoreCase(Sort.Direction.DESC.name()) ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        PageRequest pageRequest = PageRequest.of(page, size, sort);
+
+        Page<Claim> claims = claimRepository.findAllWithFilters(status, customerId, policyNo, pageRequest);
+        List<ClaimResponseDto> claimResponseDtos = claims.getContent().stream()
+                .map(this::convertEntityToDto)
+                .collect(Collectors.toList());
+
+        return new PagedResponse<>(claimResponseDtos, claims.getNumber(), claims.getSize(),
+                                   claims.getTotalElements(), claims.getTotalPages(), claims.isLast());
+    }
+
+    
+
 }

@@ -42,6 +42,8 @@ public class Customer {
 
     @Column
     private boolean active = false;
+    
+    private String stripeToken;
      
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "addressId")

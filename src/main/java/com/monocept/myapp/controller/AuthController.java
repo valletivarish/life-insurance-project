@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +21,8 @@ import com.monocept.myapp.dto.ResetPasswordRequestDto;
 import com.monocept.myapp.service.AuthService;
 import com.monocept.myapp.service.CustomerManagementService;
 import com.monocept.myapp.service.EmailService;
+import com.monocept.myapp.service.StripeService;
+import com.stripe.model.Balance;
 
 @RestController
 @RequestMapping("/GuardianLifeAssurance/auth")
@@ -85,4 +88,12 @@ public class AuthController {
 		String response = emailService.verifyOtpAndSetNewPassword(forgetPasswordRequest);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@Autowired
+	private StripeService service;
+	@GetMapping("/balance")
+    public ResponseEntity<String> retrieveBalance() {
+        Balance balance = service.retrieveBalance();
+        return ResponseEntity.ok(balance.toJson());
+    }
 }

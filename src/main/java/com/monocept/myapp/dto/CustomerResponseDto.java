@@ -1,6 +1,7 @@
 package com.monocept.myapp.dto;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import lombok.Data;
 
@@ -19,10 +20,10 @@ public class CustomerResponseDto {
 
 	private String username;
 	private String email;
-	private String password;
 	private String houseNo;
 	private String apartment;
 	private int pincode;
 	private String state;
 	private String city;
+	private List<PolicyAccountResponseDto> policyAccounts;
 }

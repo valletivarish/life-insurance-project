@@ -15,9 +15,11 @@ import org.springframework.stereotype.Service;
 
 import com.monocept.myapp.dto.AgentRequestDto;
 import com.monocept.myapp.dto.AgentResponseDto;
+import com.monocept.myapp.dto.CommissionResponseDto;
 import com.monocept.myapp.entity.Address;
 import com.monocept.myapp.entity.Agent;
 import com.monocept.myapp.entity.City;
+import com.monocept.myapp.entity.Commission;
 import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.State;
 import com.monocept.myapp.entity.User;
@@ -51,12 +53,9 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 
 	@Autowired
 	private CityRepository cityRepository;
-	
+
 	@Autowired
 	private RoleRepository roleRepository;
-
-
-
 
 	@Override
 	public String createAgent(AgentRequestDto agentRequestDto) {
@@ -73,9 +72,9 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 		user.setUsername(agentRequestDto.getUsername());
 		user.setPassword(passwordEncoder.encode(agentRequestDto.getPassword()));
 		Set<Role> roles = new HashSet<>();
-		String roleName="ROLE_AGENT";
-		Role role = roleRepository.findByName(roleName)
-				.orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Role not found: " + roleName));
+		String roleName = "ROLE_AGENT";
+		Role role = roleRepository.findByName(roleName).orElseThrow(
+				() -> new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Role not found: " + roleName));
 		roles.add(role);
 
 		user.setRoles(roles);
@@ -104,15 +103,20 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 	}
 
 	@Override
-	public PagedResponse<AgentResponseDto> getAllAgents(int page, int size, String sortBy, String direction) {
+	public PagedResponse<AgentResponseDto> getAllAgents(int page, int size, String sortBy, String direction,
+			String city, String state, Boolean isActive, String name) {
 		Sort sort = direction.equalsIgnoreCase(Sort.Direction.DESC.name()) ? Sort.by(sortBy).descending()
 				: Sort.by(sortBy).ascending();
+
 		PageRequest pageRequest = PageRequest.of(page, size, sort);
-		Page<Agent> agentPage = agentRepository.findAll(pageRequest);
+
+		Page<Agent> agentPage = agentRepository.findByFilters(name, city, state, isActive, pageRequest);
+
 		List<AgentResponseDto> agents = agentPage.getContent().stream()
 				.map(agent -> convertAgentToAgentResponseDto(agent)).collect(Collectors.toList());
-		return new PagedResponse<AgentResponseDto>(agents, agentPage.getNumber(), agentPage.getSize(),
-				agentPage.getTotalElements(), agentPage.getTotalPages(), agentPage.isLast());
+
+		return new PagedResponse<>(agents, agentPage.getNumber(), agentPage.getSize(), agentPage.getTotalElements(),
+				agentPage.getTotalPages(), agentPage.isLast());
 	}
 
 	private AgentResponseDto convertAgentToAgentResponseDto(Agent agent) {
@@ -133,13 +137,25 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 		agentResponseDto.setCity(city.getName());
 		State state = city.getState();
 		agentResponseDto.setState(state.getName());
+		agentResponseDto.setCommissions(agent.getCommissions().stream()
+				.map(commission -> convertCommissionToCommissionResponseDto(commission)).collect(Collectors.toList()));
 		return agentResponseDto;
+	}
+
+	private CommissionResponseDto convertCommissionToCommissionResponseDto(Commission commission) {
+		CommissionResponseDto commissionResponseDto = new CommissionResponseDto();
+		commissionResponseDto.setCommissionId(commission.getCommissionId());
+		commissionResponseDto.setCommissionType(commission.getCommissionType().name());
+		commissionResponseDto.setIssueDate(commission.getIssueDate());
+		commissionResponseDto.setAmount(commission.getAmount());
+		return commissionResponseDto;
 	}
 
 	@Override
 	public String updateAgent(AgentRequestDto agentRequestDto) {
-		Agent existingAgent = agentRepository.findById(agentRequestDto.getAgentId()).orElseThrow(
-				() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find an agent with ID: " + agentRequestDto.getAgentId()));
+		Agent existingAgent = agentRepository.findById(agentRequestDto.getAgentId())
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
+						"Sorry, we couldn't find an agent with ID: " + agentRequestDto.getAgentId()));
 
 		existingAgent.setFirstName(agentRequestDto.getFirstName());
 		existingAgent.setLastName(agentRequestDto.getLastName());
@@ -168,18 +184,22 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 
 	@Override
 	public AgentResponseDto getAgentById(long agentId) {
-		Agent agent = agentRepository.findById(agentId).orElseThrow(
-				() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find an agent with ID: " + agentId));
+		Agent agent = agentRepository.findById(agentId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
+						"Sorry, we couldn't find an agent with ID: " + agentId));
 		return convertAgentToAgentResponseDto(agent);
 	}
 
 	@Override
 	public String deleteAgent(long agentId) {
-		Agent agent = agentRepository.findById(agentId).orElseThrow(
-				() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find an agent with ID: " + agentId));
+		Agent agent = agentRepository.findById(agentId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
+						"Sorry, we couldn't find an agent with ID: " + agentId));
 		agent.setActive(false);
 		agentRepository.save(agent);
 		return "Agent with ID " + agentId + " has been successfully deactivated.";
 	}
+
+	
 
 }

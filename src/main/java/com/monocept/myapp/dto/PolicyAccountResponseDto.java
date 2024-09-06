@@ -3,7 +3,8 @@ package com.monocept.myapp.dto;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.monocept.myapp.entity.Installment;
+import com.monocept.myapp.entity.Address;
+import com.monocept.myapp.enums.PolicyStatus;
 import com.monocept.myapp.enums.PremiumType;
 
 import lombok.Data;
@@ -22,9 +23,12 @@ public class PolicyAccountResponseDto {
 	private LocalDate DateCreated;
 	private LocalDate maturityDate;
 	private PremiumType premiumType;
-	private double totalPremiumAmount;
+	private Address address;
+	private double premiumAmount;
 	private double profitRatio;
 	private double sumAssured;
-	private List<Installment> installments;
+	private PolicyStatus policyStatus;
+	private List<PaymentResponseDto> payments;
+	private List<InstallmentResponseDto> installments;
 
 }

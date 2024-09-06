@@ -40,6 +40,9 @@ public class Agent {
 
 	@Column
 	private double totalCommission = 0.0;
+	
+	 @Column(name = "stripe_token")
+	    private String stripeToken;
 
 	@OneToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH })
 	@JoinColumn(name = "userid")

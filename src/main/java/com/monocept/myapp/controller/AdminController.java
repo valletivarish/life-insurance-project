@@ -1,6 +1,7 @@
 package com.monocept.myapp.controller;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +22,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.monocept.myapp.dto.AdminRequestDto;
 import com.monocept.myapp.dto.AdminResponseDto;
+import com.monocept.myapp.dto.ChangePasswordRequestDto;
 import com.monocept.myapp.dto.CityRequestDto;
 import com.monocept.myapp.dto.CityResponseDto;
+import com.monocept.myapp.dto.ClaimResponseDto;
 import com.monocept.myapp.dto.EmployeeRequestDto;
 import com.monocept.myapp.dto.EmployeeResponseDto;
 import com.monocept.myapp.dto.InsurancePlanRequestDto;
@@ -30,15 +33,21 @@ import com.monocept.myapp.dto.InsurancePlanResponseDto;
 import com.monocept.myapp.dto.InsuranceSchemeRequestDto;
 import com.monocept.myapp.dto.InsuranceSchemeResponseDto;
 import com.monocept.myapp.dto.InsuranceSettingRequestDto;
+import com.monocept.myapp.dto.PaymentResponseDto;
 import com.monocept.myapp.dto.StateRequestDto;
 import com.monocept.myapp.dto.StateResponseDto;
 import com.monocept.myapp.dto.TaxSettingRequestDto;
+import com.monocept.myapp.enums.ClaimStatus;
 import com.monocept.myapp.service.AdminService;
 import com.monocept.myapp.service.AgentManagementService;
+import com.monocept.myapp.service.AuthService;
+import com.monocept.myapp.service.ClaimService;
 import com.monocept.myapp.service.EmployeeManagementService;
 import com.monocept.myapp.service.InsuranceManagementService;
+import com.monocept.myapp.service.PaymentService;
 import com.monocept.myapp.service.SettingService;
 import com.monocept.myapp.service.StateAndCityManagementService;
+import com.monocept.myapp.service.WithdrawalService;
 import com.monocept.myapp.util.PagedResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -67,6 +76,35 @@ public class AdminController {
 	@Autowired
 	private AdminService adminService;
 
+	@Autowired
+	private ClaimService claimService;
+
+	@Autowired
+	private AuthService authService;
+
+	@Autowired
+	private PaymentService paymentService;
+
+	@Autowired
+	private WithdrawalService withdrawalService;
+
+	@PutMapping("/withdrawal/approve/{withdrawalId}")
+	public ResponseEntity<String> approveWithdrawalRequest(@PathVariable long withdrawalId) {
+		withdrawalService.approveWithdrawal(withdrawalId);
+		return ResponseEntity.ok("Withdrawal request approved and refund processed successfully.");
+	}
+
+	@PutMapping("/withdrawal/reject/{withdrawalId}")
+	public ResponseEntity<String> rejectWithdrawalRequest(@PathVariable long withdrawalId) {
+		withdrawalService.rejectWithdrawal(withdrawalId);
+		return ResponseEntity.ok("Withdrawal request rejected successfully.");
+	}
+
+	@PutMapping("change-password")
+	public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequestDto changePasswordRequestDto) {
+		return new ResponseEntity<String>(authService.changePassword(changePasswordRequestDto), HttpStatus.OK);
+	}
+
 	@PutMapping
 	public ResponseEntity<String> updateAdmin(@RequestBody @Valid AdminRequestDto adminRequestDto) {
 		return new ResponseEntity<>(adminService.updateAdmin(adminRequestDto), HttpStatus.OK);
@@ -76,6 +114,7 @@ public class AdminController {
 	public ResponseEntity<String> deleteAdmin(@PathVariable long adminId) {
 		return new ResponseEntity<>(adminService.deleteAdmin(adminId), HttpStatus.OK);
 	}
+
 	@GetMapping("/{adminId}")
 	public ResponseEntity<AdminResponseDto> getAdmin(@PathVariable long adminId) {
 		return new ResponseEntity<>(adminService.getAdmin(adminId), HttpStatus.OK);
@@ -92,13 +131,14 @@ public class AdminController {
 	}
 
 	@GetMapping
-	public ResponseEntity<PagedResponse<AdminResponseDto>> getAllAdmin(@RequestParam(name = "page", defaultValue = "0") int page,
+	public ResponseEntity<PagedResponse<AdminResponseDto>> getAllAdmin(
+			@RequestParam(name = "page", defaultValue = "0") int page,
 			@RequestParam(name = "size", defaultValue = "5") int size,
 			@RequestParam(name = "sortBy", defaultValue = "adminId") String sortBy,
 			@RequestParam(name = "direction", defaultValue = "asc") String direction) {
-		return new ResponseEntity<PagedResponse<AdminResponseDto>>(adminService.getAllAdmin(page,size,sortBy,direction), HttpStatus.OK);
+		return new ResponseEntity<PagedResponse<AdminResponseDto>>(
+				adminService.getAllAdmin(page, size, sortBy, direction), HttpStatus.OK);
 	}
-	
 
 	@PostMapping("/states")
 	@Operation(summary = "Create a new state", description = "Add a new state to the system")
@@ -137,15 +177,19 @@ public class AdminController {
 				stateAndCityManagementService.getAllStates(page, size, sortBy, direction), HttpStatus.OK);
 
 	}
+
 	@PutMapping("states/activate/{stateId}")
 	@Operation(summary = "activate state by ID", description = "activate a specific state by its ID")
 	public ResponseEntity<String> activateStateById(@PathVariable(name = "stateId") long id) {
 		return new ResponseEntity<String>(stateAndCityManagementService.activateStateById(id), HttpStatus.OK);
 	}
+
 	@PutMapping("states/{stateId}/cities/activate/{cityId}")
 	@Operation(summary = "activate city by ID", description = "activate a specific city by its ID")
-	public ResponseEntity<String> activateCityById(@PathVariable(name = "stateId") long stateId,@PathVariable(name = "cityId") long cityId) {
-		return new ResponseEntity<String>(stateAndCityManagementService.activateCityById(stateId,cityId), HttpStatus.OK);
+	public ResponseEntity<String> activateCityById(@PathVariable(name = "stateId") long stateId,
+			@PathVariable(name = "cityId") long cityId) {
+		return new ResponseEntity<String>(stateAndCityManagementService.activateCityById(stateId, cityId),
+				HttpStatus.OK);
 	}
 
 	@PostMapping("states/{stateId}/cities")
@@ -262,13 +306,6 @@ public class AdminController {
 				HttpStatus.CREATED);
 	}
 
-//
-//	public ResponseEntity<PagedResponse<InsurancePlanResponseDto>> getAllSchemes(
-//			@PathVariable(name = "insurancePlanId") long insurancePlanId) {
-//		return new ResponseEntity<PagedResponse<InsurancePlanResponseDto>>(
-//				insuranceManagementService.getAllInsuranceSchemes(insurancePlanId), HttpStatus.OK);
-//	}
-
 	@GetMapping("/insurance-plans/{insurancePlanId}/insurance-scheme")
 	@Operation(summary = "Get all insurance schemes", description = "Retrieve all insurance schemes for a specific insurance plan")
 	public ResponseEntity<List<InsuranceSchemeResponseDto>> getAllSchemes(
@@ -314,5 +351,53 @@ public class AdminController {
 				HttpStatus.CREATED);
 
 	}
+
+	@PutMapping("/{claimId}/approve")
+    public ResponseEntity<String> approveClaim(@PathVariable Long claimId) {
+        String response = claimService.approveClaim(claimId);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PutMapping("/{claimId}/reject")
+    public ResponseEntity<String> rejectClaim(@PathVariable Long claimId) {
+        String response = claimService.rejectClaim(claimId);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+	@GetMapping("/payments")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
+	@Operation(summary = "Get all payments with pagination and filtering", description = "Retrieve all payments with pagination, sorting, and optional search filters")
+	public ResponseEntity<PagedResponse<PaymentResponseDto>> getAllPayments(
+			@RequestParam(name = "page", defaultValue = "0") int page,
+			@RequestParam(name = "size", defaultValue = "5") int size,
+			@RequestParam(name = "sortBy", defaultValue = "paymentDate") String sortBy,
+			@RequestParam(name = "direction", defaultValue = "ASC") String direction,
+			@RequestParam(name = "minAmount", required = false) Double minAmount,
+			@RequestParam(name = "maxAmount", required = false) Double maxAmount,
+			@RequestParam(name = "startDate", required = false) LocalDateTime startDate,
+			@RequestParam(name = "endDate", required = false) LocalDateTime endDate,
+			@RequestParam(name = "customerId", required = false) String customerId,
+			@RequestParam(name = "paymentId", required = false) Long paymentId) {
+
+		PagedResponse<PaymentResponseDto> payments = paymentService.getAllPaymentsWithFilters(page, size, sortBy,
+				direction, minAmount, maxAmount, startDate, endDate, customerId, paymentId);
+
+		return new ResponseEntity<>(payments, HttpStatus.OK);
+	}
+	
+	@GetMapping("/claims")
+    @Operation(summary = "View all claims", description = "Retrieve all claims with pagination, sorting, and optional filters")
+    public ResponseEntity<PagedResponse<ClaimResponseDto>> getAllClaims(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "sortBy", defaultValue = "claimId") String sortBy,
+            @RequestParam(name = "direction", defaultValue = "ASC") String direction,
+            @RequestParam(name = "status", required = false) ClaimStatus status,
+            @RequestParam(name = "customerId", required = false) Long customerId,
+            @RequestParam(name = "policyNo", required = false) Long policyNo) {
+
+        PagedResponse<ClaimResponseDto> claims = claimService.getAllClaimsWithFilters(page, size, sortBy, direction, status, customerId, policyNo);
+        return new ResponseEntity<>(claims, HttpStatus.OK);
+    }
 
 }

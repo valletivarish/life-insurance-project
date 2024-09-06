@@ -4,15 +4,22 @@ import java.util.List;
 
 import com.monocept.myapp.dto.ClaimRequestDto;
 import com.monocept.myapp.dto.ClaimResponseDto;
+import com.monocept.myapp.enums.ClaimStatus;
+import com.monocept.myapp.util.PagedResponse;
 
 public interface ClaimService {
 
-	ClaimResponseDto createClaim(Long agentId, ClaimRequestDto claimRequestDto);
 
-	List<ClaimResponseDto> getClaimsByAgentId(Long agentId);
 
 	ClaimResponseDto createCustomerClaim(Long customerId, ClaimRequestDto claimRequestDto);
 
 	List<ClaimResponseDto> getAllClaimsByCustomerId(Long customerId);
+
+	String approveClaim(Long claimId);
+
+	String rejectClaim(Long claimId);
+
+	PagedResponse<ClaimResponseDto> getAllClaimsWithFilters(int page, int size, String sortBy, String direction,
+			ClaimStatus status, Long customerId, Long policyNo);
 
 }
