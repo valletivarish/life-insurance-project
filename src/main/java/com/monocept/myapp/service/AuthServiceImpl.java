@@ -8,9 +8,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.monocept.myapp.dto.ChangePasswordRequestDto;
 import com.monocept.myapp.dto.LoginDto;
 import com.monocept.myapp.dto.RegisterDto;
 import com.monocept.myapp.entity.Admin;
@@ -33,13 +35,14 @@ public class AuthServiceImpl implements AuthService {
 	private AdminRepository adminRepository;
 
 	public AuthServiceImpl(AuthenticationManager authenticationManager, UserRepository userRepository,
-			RoleRepository roleRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider,AdminRepository adminRepository) {
+			RoleRepository roleRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider,
+			AdminRepository adminRepository) {
 		this.authenticationManager = authenticationManager;
 		this.userRepository = userRepository;
 		this.roleRepository = roleRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.jwtTokenProvider = jwtTokenProvider;
-		this.adminRepository=adminRepository;
+		this.adminRepository = adminRepository;
 	}
 
 	@Override
@@ -56,37 +59,73 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	@Override
-    public String register(RegisterDto registerDto) {
-        if (userRepository.existsByUsername(registerDto.getUsername())) {
-            throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Username already exists!");
-        }
+	public String register(RegisterDto registerDto) {
+		if (userRepository.existsByUsername(registerDto.getUsername())) {
+			throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Username already exists!");
+		}
 
-        if (userRepository.existsByEmail(registerDto.getEmail())) {
-            throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Email already exists!");
-        }
+		if (userRepository.existsByEmail(registerDto.getEmail())) {
+			throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Email already exists!");
+		}
 
-        User user = new User();
-        user.setUsername(registerDto.getUsername());
-        user.setEmail(registerDto.getEmail());
-        user.setPassword(passwordEncoder.encode(registerDto.getPassword()));
+		User user = new User();
+		user.setUsername(registerDto.getUsername());
+		user.setEmail(registerDto.getEmail());
+		user.setPassword(passwordEncoder.encode(registerDto.getPassword()));
 
-        Set<Role> roles = new HashSet<>();
-        for (String roleName : registerDto.getRoles()) {
-            Role role = roleRepository.findByName(roleName)
-                    .orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Role not found: " + roleName));
-            roles.add(role);
-        }
+		Set<Role> roles = new HashSet<>();
+		for (String roleName : registerDto.getRoles()) {
+			Role role = roleRepository.findByName(roleName).orElseThrow(
+					() -> new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "Role not found: " + roleName));
+			roles.add(role);
+		}
 
-        user.setRoles(roles);
-        userRepository.save(user);
-        if (registerDto.getRoles().contains("ROLE_ADMIN")) {
-            Admin admin = new Admin();
-            admin.setName(registerDto.getName());
-            admin.setUser(user);
-            admin.setActive(true);
-            adminRepository.save(admin);
-        }
+		user.setRoles(roles);
+		userRepository.save(user);
+		if (registerDto.getRoles().contains("ROLE_ADMIN")) {
+			Admin admin = new Admin();
+			admin.setName(registerDto.getName());
+			admin.setUser(user);
+			admin.setActive(true);
+			adminRepository.save(admin);
+		}
 
-        return "User registered successfully!";
-    }
+		return "User registered successfully!";
+	}
+
+	private String getEmailFromSecurityContext() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+			UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+			return userDetails.getUsername();
+		}
+		return null;
+	}
+
+	@Override
+	public String changePassword(ChangePasswordRequestDto changePasswordRequestDto) {
+		String userNameOrEmail = getEmailFromSecurityContext();
+		User user = userRepository.findByUsernameOrEmail(userNameOrEmail, userNameOrEmail).orElse(null);
+
+		if (user == null) {
+			throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST,
+					"We couldn't find your account. Please try again.");
+		}
+
+		if (!passwordEncoder.matches(changePasswordRequestDto.getExistingPassword(), user.getPassword())) {
+			throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST,
+					"The current password you entered is incorrect. Please double-check and try again.");
+		}
+
+		if (!changePasswordRequestDto.getNewPassword().equals(changePasswordRequestDto.getConfirmPassword())) {
+			throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST,
+					"The new passwords you entered do not match. Please make sure both passwords are the same.");
+		}
+
+		user.setPassword(passwordEncoder.encode(changePasswordRequestDto.getNewPassword()));
+		userRepository.save(user);
+
+		return "Your password has been updated successfully. Please use your new password for future logins.";
+	}
+
 }

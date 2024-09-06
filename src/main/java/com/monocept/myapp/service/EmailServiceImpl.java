@@ -11,11 +11,9 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.monocept.myapp.dto.ForgetPasswordRequestDto;
 import com.monocept.myapp.dto.ResetPasswordRequestDto;
 import com.monocept.myapp.entity.OtpStore;
 import com.monocept.myapp.entity.User;
-import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException.ResourceNotFoundException;
 import com.monocept.myapp.repository.OtpRepository;

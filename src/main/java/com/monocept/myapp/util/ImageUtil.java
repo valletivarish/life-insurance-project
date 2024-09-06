@@ -6,7 +6,6 @@ import java.util.zip.Inflater;
 
 public class ImageUtil {
 
-    // Compress the given binary data (e.g., images, PDFs)
     public static byte[] compressFile(byte[] data) {
         Deflater deflater = new Deflater();
         deflater.setLevel(Deflater.BEST_COMPRESSION);
@@ -26,7 +25,6 @@ public class ImageUtil {
         return outputStream.toByteArray();
     }
 
-    // Decompress the given binary data
     public static byte[] decompressFile(byte[] data) {
         Inflater inflater = new Inflater();
         inflater.setInput(data);

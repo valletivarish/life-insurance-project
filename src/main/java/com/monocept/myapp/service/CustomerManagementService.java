@@ -49,4 +49,9 @@ public interface CustomerManagementService {
 
 	Long processPolicyPurchase(PolicyAccountRequestDto accountRequestDto, long customerId);
 
+	String cancelPolicy(long customerId, long policyNo);
+
+	PagedResponse<CustomerResponseDto> getAllCustomersWithFilters(int page, int size, String sortBy, String direction, String name, String city,
+			String state, Boolean isActive);
+
 }

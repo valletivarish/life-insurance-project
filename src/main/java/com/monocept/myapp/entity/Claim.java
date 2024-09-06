@@ -1,65 +1,51 @@
 package com.monocept.myapp.entity;
 
-import java.sql.Date;
-
-import org.hibernate.annotations.CreationTimestamp;
+import java.time.LocalDateTime;
 
 import com.monocept.myapp.enums.ClaimStatus;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
 @Entity
-@Table(name = "claim")
 @Data
+@Table(name = "claims")
 public class Claim {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "claimId")
-    private Long claimId;
+    private long claimId;
 
-    @OneToOne
-    @JoinColumn(name = "policyNo")
-    private PolicyAccount policy;
+    @ManyToOne
+    @JoinColumn(name = "customer_id", nullable = false)
+    private Customer customer;
 
-    @Column(name = "claimAmount")
+    @ManyToOne
+    @JoinColumn(name = "policy_id", nullable = false)
+    private PolicyAccount policyAccount;
+
+    @Column(nullable = false)
+    private LocalDateTime claimDate;
+
+    @Column(nullable = false)
+    private String claimReason;
+
+    @Column(nullable = false)
     private double claimAmount;
 
-    @Column(name = "bankName")
-    private String bankName;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ClaimStatus status;
 
-    @Column(name = "branchName")
-    private String branchName;
-
-    @Column(name = "bankAccountNumber")
-    private String bankAccountNumber;
-
-    @Column(name = "ifscCode")
-    private String ifscCode;
-
-    @Column(name = "claimDate")
-    @CreationTimestamp
-    private Date date;
-
-    @Column(name = "claimStatus")
-    private ClaimStatus status = ClaimStatus.PENDING;
-
-    @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REFRESH})
-    @JoinColumn(name = "agentId", referencedColumnName = "agentId")
-    private Agent agent;
-    
-    @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REFRESH})
-    @JoinColumn(name = "customerId", referencedColumnName = "customerId")
-    private Customer customer;
-    
+    private LocalDateTime approvalDate;
+    private LocalDateTime rejectionDate;
 }

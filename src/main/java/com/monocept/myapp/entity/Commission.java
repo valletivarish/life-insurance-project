@@ -4,6 +4,8 @@ import java.sql.Date;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.monocept.myapp.enums.CommissionType;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,7 +28,7 @@ public class Commission {
     private long commissionId;
 
     @Column(name = "commissionType")
-    private String commissionType;
+    private CommissionType commissionType;
 
     @Column(name = "issueDate")
     @CreationTimestamp

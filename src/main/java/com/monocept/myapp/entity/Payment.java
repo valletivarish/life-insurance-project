@@ -30,7 +30,7 @@ public class Payment {
 	private String chargeId;
 
 	@Column(name = "customerId", nullable = false)
-	private String customerId;
+	private long customerId;
 
 	@Column(name = "amount", nullable = false)
 	private double amount;
