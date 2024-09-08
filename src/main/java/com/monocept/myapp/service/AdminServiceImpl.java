@@ -20,6 +20,7 @@ import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException.UserAlreadyDeactivatedException;
 import com.monocept.myapp.repository.AdminRepository;
 import com.monocept.myapp.repository.RoleRepository;
 import com.monocept.myapp.repository.UserRepository;
@@ -65,7 +66,7 @@ public class AdminServiceImpl implements AdminService {
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 						"Sorry, we couldn't find an admin with ID: " + adminId));
 		if (!admin.isActive()) {
-			throw new GuardianLifeAssuranceException.UserAlreadyDeActivatedException(
+			throw new UserAlreadyDeactivatedException(
 					"admin with ID " + adminId + " is already deactivated.");
 		}
 		admin.setActive(false);
@@ -112,7 +113,7 @@ public class AdminServiceImpl implements AdminService {
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 						"Sorry, we couldn't find an admin with ID: " + adminId));
 		if(!admin.isActive()) {
-			throw new GuardianLifeAssuranceException.UserAlreadyDeActivatedException("The admin "+adminId+" is already Deactivated ");
+			throw new UserAlreadyDeactivatedException("The admin "+adminId+" is already Deactivated ");
 		}
 		admin.setActive(false);
 		return "Admin Deleted Successfully with "+adminId+".";

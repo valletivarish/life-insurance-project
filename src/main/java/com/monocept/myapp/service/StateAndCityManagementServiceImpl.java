@@ -18,6 +18,7 @@ import com.monocept.myapp.entity.City;
 import com.monocept.myapp.entity.State;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException.ResourceAlreadyDeactivatedException;
 import com.monocept.myapp.repository.CityRepository;
 import com.monocept.myapp.repository.StateRepository;
 import com.monocept.myapp.util.PagedResponse;
@@ -84,7 +85,7 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
 						"Sorry, we couldn't find a state with ID: " + id));
 		if (!existingState.isActive()) {
-			throw new GuardianLifeAssuranceException.ResourceAlreadyDeactivedException(
+			throw new ResourceAlreadyDeactivatedException(
 					"State '" + existingState.getName() + "' is already deactivated.");
 		}
 		existingState.setActive(false);

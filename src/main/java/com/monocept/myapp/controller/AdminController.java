@@ -166,17 +166,7 @@ public class AdminController {
 		return new ResponseEntity<StateResponseDto>(stateAndCityManagementService.getStateById(id), HttpStatus.OK);
 	}
 
-	@GetMapping("states")
-	@Operation(summary = "Get all states", description = "Retrieve a paginated list of all states")
-	public ResponseEntity<PagedResponse<StateResponseDto>> getAllStates(
-			@RequestParam(name = "page", defaultValue = "0") int page,
-			@RequestParam(name = "size", defaultValue = "5") int size,
-			@RequestParam(name = "sortBy", defaultValue = "stateId") String sortBy,
-			@RequestParam(name = "direction", defaultValue = "asc") String direction) {
-		return new ResponseEntity<PagedResponse<StateResponseDto>>(
-				stateAndCityManagementService.getAllStates(page, size, sortBy, direction), HttpStatus.OK);
-
-	}
+	
 
 	@PutMapping("states/activate/{stateId}")
 	@Operation(summary = "activate state by ID", description = "activate a specific state by its ID")
@@ -278,16 +268,7 @@ public class AdminController {
 				HttpStatus.OK);
 	}
 
-	@GetMapping("/insurance-plans")
-	@Operation(summary = "Get all insurance plans", description = "Retrieve a paginated list of all insurance plans")
-	public ResponseEntity<PagedResponse<InsurancePlanResponseDto>> getAllInsurancePlans(
-			@RequestParam(name = "page", defaultValue = "0") int page,
-			@RequestParam(name = "size", defaultValue = "5") int size,
-			@RequestParam(name = "sortBy", defaultValue = "InsurancePlanId") String sortBy,
-			@RequestParam(name = "direction", defaultValue = "asc") String direction) {
-		return new ResponseEntity<>(insuranceManagementService.getAllInsurancePlans(page, size, sortBy, direction),
-				HttpStatus.OK);
-	}
+	
 
 	@DeleteMapping("/insurance-plans/{insurancePlanId}")
 	@Operation(summary = "Deactivate an insurance plan", description = "Mark an insurance plan as inactive by its ID")

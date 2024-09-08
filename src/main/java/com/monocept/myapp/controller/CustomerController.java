@@ -1,10 +1,13 @@
 package com.monocept.myapp.controller;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.itextpdf.text.DocumentException;
 import com.monocept.myapp.dto.ChangePasswordRequestDto;
 import com.monocept.myapp.dto.ClaimRequestDto;
 import com.monocept.myapp.dto.ClaimResponseDto;
@@ -196,21 +200,27 @@ public class CustomerController {
 	public ResponseEntity<String> policyCancel(@PathVariable(name = "customerId") long customerId,@PathVariable(name = "policyNo") long policyNo){
 		return new ResponseEntity<String>(customerManagementService.cancelPolicy(customerId,policyNo),HttpStatus.OK);
 	}
+
+
 	@PostMapping("{customerId}/policies/installments/{installmentId}/pay")
-	@PreAuthorize("hasRole('CUSTOMER')")
-	public ResponseEntity<String> payInstallment(
-	        @PathVariable Long customerId, 
-	        @PathVariable Long installmentId, 
-	        @RequestBody InstallmentPaymentRequestDto paymentRequest) {
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<byte[]> payInstallment(
+            @PathVariable Long customerId, 
+            @PathVariable Long installmentId, 
+            @RequestBody InstallmentPaymentRequestDto paymentRequest) throws DocumentException, IOException {
 
-	    paymentRequest.setInstallmentId(installmentId);
-	    paymentRequest.setCustomerId(customerId);
+        paymentRequest.setInstallmentId(installmentId);
+        paymentRequest.setCustomerId(customerId);
 
-	    String response = installmentService.processInstallmentPayment(paymentRequest);
-	    return ResponseEntity.ok(response);
-	}
+        ByteArrayInputStream receiptStream = installmentService.processInstallmentPayment(paymentRequest);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "inline; filename=InstallmentReceipt.pdf");
+
+        return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF).body(receiptStream.readAllBytes());
 
 	
 	
 
+}
 }

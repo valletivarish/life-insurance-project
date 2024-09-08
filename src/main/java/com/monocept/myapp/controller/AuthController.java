@@ -3,9 +3,12 @@ package com.monocept.myapp.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,10 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.monocept.myapp.dto.CustomerRequestDto;
 import com.monocept.myapp.dto.ForgetPasswordRequestDto;
-import com.monocept.myapp.dto.JWTAuthResponse;
+import com.monocept.myapp.dto.JwtResponse;
 import com.monocept.myapp.dto.LoginDto;
 import com.monocept.myapp.dto.RegisterDto;
 import com.monocept.myapp.dto.ResetPasswordRequestDto;
+import com.monocept.myapp.security.JwtTokenProvider;
 import com.monocept.myapp.service.AuthService;
 import com.monocept.myapp.service.CustomerManagementService;
 import com.monocept.myapp.service.EmailService;
@@ -26,6 +30,7 @@ import com.stripe.model.Balance;
 
 @RestController
 @RequestMapping("/GuardianLifeAssurance/auth")
+@CrossOrigin(origins = "http://localhost:3000", exposedHeaders = HttpHeaders.AUTHORIZATION)
 public class AuthController {
 
 	private AuthService authService;
@@ -40,6 +45,9 @@ public class AuthController {
 
 	@Autowired
 	private EmailService emailService;
+	
+	@Autowired
+	private JwtTokenProvider jwtTokenProvider;
 
 	@PostMapping("/customer-registration")
 	public ResponseEntity<String> createCustomer(@RequestBody CustomerRequestDto customerRequestDto) {
@@ -47,23 +55,15 @@ public class AuthController {
 				HttpStatus.CREATED);
 	}
 
-	// Build Login REST API
-	@PostMapping(value = { "/login" })
-	public ResponseEntity<JWTAuthResponse> login(@RequestBody LoginDto loginDto) {
-		logger.trace("A TRACE Message");
-		logger.debug("A DEBUG Message");
-		logger.info("An INFO Message");
-		logger.warn("A WARN Message");
-		logger.error("An ERROR Message");
-		String token = authService.login(loginDto);
-		System.out.println(loginDto);
-		JWTAuthResponse jwtAuthResponse = new JWTAuthResponse();
-		jwtAuthResponse.setAccessToken(token);
+	@PostMapping("/login")
+	public ResponseEntity<?> login(@RequestBody LoginDto loginRequest) {
+		JwtResponse jwtResponse = authService.login(loginRequest);
 
-		return ResponseEntity.ok(jwtAuthResponse);
+		String token = jwtTokenProvider.generateToken(SecurityContextHolder.getContext().getAuthentication());
+
+		return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, token).body(jwtResponse);
 	}
 
-	// Build Register REST API
 	@PostMapping(value = { "/register" })
 	public ResponseEntity<String> register(@RequestBody RegisterDto registerDto) {
 
@@ -82,18 +82,20 @@ public class AuthController {
 		String response = emailService.sendOtpForForgetPassword(otpForgetPasswordRequest.getUsernameOrEmail());
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+
 	@PostMapping("/verify-otp")
 	public ResponseEntity<String> verifyOtpAndSetNewPassword(
 			@RequestBody @Validated ResetPasswordRequestDto forgetPasswordRequest) {
 		String response = emailService.verifyOtpAndSetNewPassword(forgetPasswordRequest);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@Autowired
 	private StripeService service;
+
 	@GetMapping("/balance")
-    public ResponseEntity<String> retrieveBalance() {
-        Balance balance = service.retrieveBalance();
-        return ResponseEntity.ok(balance.toJson());
-    }
+	public ResponseEntity<String> retrieveBalance() {
+		Balance balance = service.retrieveBalance();
+		return ResponseEntity.ok(balance.toJson());
+	}
 }
