@@ -54,7 +54,7 @@ public class SecurityConfig implements WebMvcConfigurer{
                         .requestMatchers("/GuardianLifeAssurance/auth/forgot-password").permitAll()
                         .requestMatchers("/swagger-ui/**","/v3/api-docs").permitAll()
 //                        .requestMatchers("/GuardianLifeAssurance/customers/**").hasAnyRole("CUSTOMER")
-//                        .requestMatchers("/GuardianLifeAssurance/shared/cus").permitAll()
+                        .requestMatchers("/GuardianLifeAssurance/**").permitAll()
                         .anyRequest().authenticated()
                 ).exceptionHandling( exception -> exception
                         .authenticationEntryPoint(authenticationEntryPoint)

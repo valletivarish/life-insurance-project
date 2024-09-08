@@ -14,13 +14,15 @@ public class GuardianLifeAssuranceException extends RuntimeException {
 			super(message);
 		}
 	}
-	public static class ResourceAlreadyDeactivedException extends GuardianLifeAssuranceException {
+
+	public static class ResourceAlreadyDeactivatedException extends GuardianLifeAssuranceException {
 		private static final long serialVersionUID = 1L;
 
-		public ResourceAlreadyDeactivedException(String message) {
+		public ResourceAlreadyDeactivatedException(String message) {
 			super(message);
 		}
 	}
+
 	public static class ResourceNotActiveException extends GuardianLifeAssuranceException {
 		private static final long serialVersionUID = 1L;
 
@@ -28,6 +30,7 @@ public class GuardianLifeAssuranceException extends RuntimeException {
 			super(message);
 		}
 	}
+
 	public static class DocumentNotVerifiedException extends GuardianLifeAssuranceException {
 		private static final long serialVersionUID = 1L;
 
@@ -35,7 +38,6 @@ public class GuardianLifeAssuranceException extends RuntimeException {
 			super(message);
 		}
 	}
-
 
 	public static class UserNotFoundException extends GuardianLifeAssuranceException {
 		private static final long serialVersionUID = 1L;
@@ -53,10 +55,10 @@ public class GuardianLifeAssuranceException extends RuntimeException {
 		}
 	}
 
-	public static class UserAlreadyDeActivatedException extends GuardianLifeAssuranceException {
+	public static class UserAlreadyDeactivatedException extends GuardianLifeAssuranceException {
 		private static final long serialVersionUID = 1L;
 
-		public UserAlreadyDeActivatedException(String message) {
+		public UserAlreadyDeactivatedException(String message) {
 			super(message);
 		}
 	}
@@ -68,85 +70,4 @@ public class GuardianLifeAssuranceException extends RuntimeException {
 			super(message);
 		}
 	}
-
-	public static class SchemeNotActiveException extends GuardianLifeAssuranceException {
-		private static final long serialVersionUID = 1L;
-
-		public SchemeNotActiveException(String message) {
-			super(message);
-		}
-	}
-
-	public static class PlanNotActiveException extends GuardianLifeAssuranceException {
-		private static final long serialVersionUID = 1L;
-
-		public PlanNotActiveException(String message) {
-			super(message);
-		}
-	}
-
-	public static class SchemeNotFoundException extends GuardianLifeAssuranceException {
-		private static final long serialVersionUID = 1L;
-
-		public SchemeNotFoundException(String message) {
-			super(message);
-		}
-	}
-
-	public static class PlanNotFoundException extends GuardianLifeAssuranceException {
-		private static final long serialVersionUID = 1L;
-
-		public PlanNotFoundException(String message) {
-			super(message);
-		}
-	}
-
-	public static class NoUserFoundException extends GuardianLifeAssuranceException {
-		private static final long serialVersionUID = 1L;
-
-		public NoUserFoundException(String message) {
-			super(message);
-		}
-	}
-
-	public static class NoTransactionsFoundException extends GuardianLifeAssuranceException {
-		private static final long serialVersionUID = 1L;
-
-		public NoTransactionsFoundException(String message) {
-			super(message);
-		}
-	}
-
-	public static class UserNotAssociatedException extends GuardianLifeAssuranceException {
-		private static final long serialVersionUID = 1L;
-
-		public UserNotAssociatedException(String message) {
-			super(message);
-		}
-	}
-
-	public static class AccountNotActiveException extends GuardianLifeAssuranceException {
-		private static final long serialVersionUID = 1L;
-
-		public AccountNotActiveException(String message) {
-			super(message);
-		}
-	}
-
-	public static class AccountDoesNotBelongToUserException extends GuardianLifeAssuranceException {
-		private static final long serialVersionUID = 1L;
-
-		public AccountDoesNotBelongToUserException(String message) {
-			super(message);
-		}
-	}
-
-	public static class AccountAlreadyActiveException extends GuardianLifeAssuranceException {
-		private static final long serialVersionUID = 1L;
-
-		public AccountAlreadyActiveException(String message) {
-			super(message);
-		}
-	}
-
 }

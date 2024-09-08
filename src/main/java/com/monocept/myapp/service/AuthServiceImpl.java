@@ -7,12 +7,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.monocept.myapp.dto.ChangePasswordRequestDto;
+import com.monocept.myapp.dto.JwtResponse;
 import com.monocept.myapp.dto.LoginDto;
 import com.monocept.myapp.dto.RegisterDto;
 import com.monocept.myapp.entity.Admin;
@@ -22,7 +24,6 @@ import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.repository.AdminRepository;
 import com.monocept.myapp.repository.RoleRepository;
 import com.monocept.myapp.repository.UserRepository;
-import com.monocept.myapp.security.JwtTokenProvider;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -31,31 +32,30 @@ public class AuthServiceImpl implements AuthService {
 	private UserRepository userRepository;
 	private RoleRepository roleRepository;
 	private PasswordEncoder passwordEncoder;
-	private JwtTokenProvider jwtTokenProvider;
 	private AdminRepository adminRepository;
 
 	public AuthServiceImpl(AuthenticationManager authenticationManager, UserRepository userRepository,
-			RoleRepository roleRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider,
-			AdminRepository adminRepository) {
+			RoleRepository roleRepository, PasswordEncoder passwordEncoder, AdminRepository adminRepository) {
 		this.authenticationManager = authenticationManager;
 		this.userRepository = userRepository;
 		this.roleRepository = roleRepository;
 		this.passwordEncoder = passwordEncoder;
-		this.jwtTokenProvider = jwtTokenProvider;
 		this.adminRepository = adminRepository;
 	}
 
 	@Override
-	public String login(LoginDto loginDto) {
-
+	public JwtResponse login(LoginDto loginRequest) {
 		Authentication authentication = authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(loginDto.getUsernameOrEmail(), loginDto.getPassword()));
+				new UsernamePasswordAuthenticationToken(loginRequest.getUsernameOrEmail(), loginRequest.getPassword()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
-		String token = jwtTokenProvider.generateToken(authentication);
+		UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+		String usernameOrEmail = userDetails.getUsername();
+		String role = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).findFirst()
+				.orElse("ROLE_CUSTOMER");
 
-		return token;
+		return new JwtResponse(usernameOrEmail, role);
 	}
 
 	@Override

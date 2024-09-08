@@ -56,6 +56,7 @@ import com.monocept.myapp.enums.WithdrawalRequestStatus;
 import com.monocept.myapp.enums.WithdrawalRequestType;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException.UserAlreadyDeactivatedException;
 import com.monocept.myapp.repository.AddressRepository;
 import com.monocept.myapp.repository.AgentRepository;
 import com.monocept.myapp.repository.CommissionRepository;
@@ -154,8 +155,9 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		roles.add(role);
 
 		user.setRoles(roles);
-		userRepository.save(user);
+		
 		Address address = new Address();
+
 		State state = stateRepository.findById(customerRequestDto.getStateId()).orElse(null);
 		List<City> cities = state.getCity();
 		City city = cities.stream().filter(c -> c.getCityId() == customerRequestDto.getCityId()).findFirst()
@@ -165,14 +167,17 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		address.setPincode(customerRequestDto.getPincode());
 		address.setApartment(customerRequestDto.getApartment());
 
-		addressRepository.save(address);
+		
 		customer.setActive(customerRequestDto.isActive());
 		customer.setAddress(address);
+		customer.setActive(true);
 		customer.setDateOfBirth(customerRequestDto.getDateOfBirth());
 		customer.setFirstName(customerRequestDto.getFirstName());
 		customer.setLastName(customerRequestDto.getLastName());
 		customer.setPhoneNumber(customerRequestDto.getPhoneNumber());
 		customer.setUser(user);
+		addressRepository.save(address);
+		userRepository.save(user);
 		return customerRepository.save(customer);
 	}
 
@@ -214,7 +219,7 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 						"Sorry, we couldn't find a customer with ID: " + customerId));
 		if (!customer.isActive()) {
-			throw new GuardianLifeAssuranceException.UserAlreadyDeActivatedException(
+			throw new UserAlreadyDeactivatedException(
 					"The customer with ID " + customerId + " is already deactivated.");
 		}
 		customer.setActive(false);

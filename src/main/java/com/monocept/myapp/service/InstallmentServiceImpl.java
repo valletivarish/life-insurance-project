@@ -1,10 +1,12 @@
 package com.monocept.myapp.service;
 
+import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.itextpdf.text.DocumentException;
 import com.monocept.myapp.dto.InstallmentPaymentRequestDto;
 import com.monocept.myapp.entity.Agent;
 import com.monocept.myapp.entity.Commission;
@@ -40,9 +42,13 @@ public class InstallmentServiceImpl implements InstallmentService {
 
     @Autowired
     private CommissionRepository commissionRepository;
+    @Autowired
+    private GenerateReceiptService generateReceiptService;
+
+    
 
     @Override
-    public String processInstallmentPayment(InstallmentPaymentRequestDto request) {
+    public ByteArrayInputStream processInstallmentPayment(InstallmentPaymentRequestDto request) throws DocumentException {
         Installment installment = installmentRepository.findById(request.getInstallmentId())
                 .orElseThrow(() -> new RuntimeException("Installment not found"));
 
@@ -62,27 +68,23 @@ public class InstallmentServiceImpl implements InstallmentService {
         payment.setAmount(request.getAmount());
         payment.setCustomerId(request.getCustomerId());
         payment.setStatus(PaymentStatus.PAID);
-        
+
         PolicyAccount policyAccount = installment.getInsurancePolicy();
-       
-
-        paymentRepository.save(payment);
-
-        installmentRepository.save(installment);
-
         policyAccount.getPayments().add(payment);
+        paymentRepository.save(payment);
+        installmentRepository.save(installment);
         policyAccountRepository.save(policyAccount);
 
         applyInstallmentCommission(policyAccount, request.getAmount());
 
-        return "Installment payment successful!";
+        return generateReceiptService.generateReceipt(installment, payment, policyAccount);
     }
 
     private void applyInstallmentCommission(PolicyAccount policyAccount, double amount) {
         Agent agent = policyAccount.getAgent();
 
         if (agent == null) {
-            return; 
+            return;
         }
 
         double commissionRate = policyAccount.getInsuranceScheme().getInstallmentCommRatio();
@@ -95,8 +97,9 @@ public class InstallmentServiceImpl implements InstallmentService {
 
         commissionRepository.save(commission);
 
-        double updatedTotalCommission = agent.getTotalCommission() + commissionAmount;
-        agent.setTotalCommission(updatedTotalCommission);
-        agentRepository.save(agent); 
+        agent.setTotalCommission(agent.getTotalCommission() + commissionAmount);
+        agentRepository.save(agent);
     }
+
+    
 }

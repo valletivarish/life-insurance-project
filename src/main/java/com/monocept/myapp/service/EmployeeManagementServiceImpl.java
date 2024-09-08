@@ -21,6 +21,7 @@ import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException.UserAlreadyDeactivatedException;
 import com.monocept.myapp.repository.DocumentRepository;
 import com.monocept.myapp.repository.EmployeeRepository;
 import com.monocept.myapp.repository.RoleRepository;
@@ -122,7 +123,7 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 		Employee employee = employeeRepository.findById(employeeId)
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find an employee with ID: " + employeeId));
 		if (!employee.isActive()) {
-			throw new GuardianLifeAssuranceException.UserAlreadyDeActivatedException("Employee with ID " + employeeId + " is already deactivated.");
+			throw new UserAlreadyDeactivatedException("Employee with ID " + employeeId + " is already deactivated.");
 		}
 		employee.setActive(false);
 		employeeRepository.save(employee);
