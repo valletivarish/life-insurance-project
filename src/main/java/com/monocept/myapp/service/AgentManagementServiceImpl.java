@@ -164,9 +164,6 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 		existingAddress.setApartment(agentRequestDto.getApartment());
 		existingAddress.setHouseNo(agentRequestDto.getHouseNo());
 		existingAddress.setPincode(agentRequestDto.getPincode());
-		City city = cityRepository.findById(agentRequestDto.getCityId()).orElse(null);
-		City newCity = addressRepository.findByCity(city);
-		existingAddress.setCity(newCity);
 
 		addressRepository.save(existingAddress);
 

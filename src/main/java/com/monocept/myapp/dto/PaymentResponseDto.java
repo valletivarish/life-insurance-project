@@ -1,6 +1,6 @@
 package com.monocept.myapp.dto;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import com.monocept.myapp.enums.PaymentStatus;
 
@@ -12,5 +12,5 @@ public class PaymentResponseDto {
     private Double amount;
     private long customerId;
     private PaymentStatus status;
-    private LocalDateTime paymentDate;
+    private LocalDate paymentDate;
 }

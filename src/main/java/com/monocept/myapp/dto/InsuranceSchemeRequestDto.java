@@ -16,9 +16,6 @@ public class InsuranceSchemeRequestDto {
     @NotEmpty(message = "Scheme name is required")
     private String schemeName;
 
-    @NotEmpty(message = "Description is required")
-    private String description;
-
     private Long schemeDetailId;
 
     private boolean active = true;

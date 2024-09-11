@@ -50,13 +50,14 @@ public class AgentController {
 	}
 
 	@GetMapping("/agents/{agentId}")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE') or hasRole('AGENT')")
 	@Operation(summary = "get agent by id", description = " agent")
 	public ResponseEntity<AgentResponseDto> getAgentById(@PathVariable long agentId) {
 		return new ResponseEntity<AgentResponseDto>(agentManagementService.getAgentById(agentId), HttpStatus.OK);
 	}
 
 	@PutMapping("/agents")
-	@Operation(summary = "update agent", description = " agent")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE') or hasRole('AGENT')")
 	public ResponseEntity<String> updateAgent(@RequestBody AgentRequestDto agentRequestDto) {
 		return new ResponseEntity<String>(agentManagementService.updateAgent(agentRequestDto), HttpStatus.OK);
 	}

@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.monocept.myapp.entity.WithdrawalRequest;
 import com.monocept.myapp.enums.WithdrawalRequestStatus;
+import com.monocept.myapp.enums.WithdrawalRequestType;
 
 public interface WithdrawalRepository extends JpaRepository<WithdrawalRequest, Long> {
 
@@ -37,5 +38,10 @@ public interface WithdrawalRepository extends JpaRepository<WithdrawalRequest, L
                                                       @Param("fromDate") LocalDate fromDate, 
                                                       @Param("toDate") LocalDate toDate, 
                                                       PageRequest pageRequest);
+
+
+
+    @Query("SELECT COUNT(w) FROM WithdrawalRequest w WHERE w.requestType = :requestType")
+    long countByRequestType(@Param("requestType") WithdrawalRequestType requestType);
 
 }

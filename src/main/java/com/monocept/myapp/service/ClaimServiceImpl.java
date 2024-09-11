@@ -38,6 +38,9 @@ public class ClaimServiceImpl implements ClaimService {
 
 	@Autowired
 	private StripeService stripeService;
+	
+	@Autowired
+	private EmailService emailService;
 
 	@Override
 	public ClaimResponseDto createCustomerClaim(Long customerId, ClaimRequestDto claimRequestDto) {
@@ -75,15 +78,7 @@ public class ClaimServiceImpl implements ClaimService {
 		return claims.stream().map(this::convertEntityToDto).collect(Collectors.toList());
 	}
 
-	private ClaimResponseDto convertEntityToDto(Claim claim) {
-		ClaimResponseDto dto = new ClaimResponseDto();
-		dto.setClaimId(claim.getClaimId());
-		dto.setPolicyNo(claim.getPolicyAccount().getPolicyNo());
-		dto.setClaimAmount(claim.getClaimAmount());
-		dto.setClaimReason(claim.getClaimReason());
-		dto.setStatus(claim.getStatus());
-		return dto;
-	}
+	
 
 	@Override
 	public String approveClaim(Long claimId) {
@@ -99,14 +94,15 @@ public class ClaimServiceImpl implements ClaimService {
 
 	    String stripeToken = claim.getCustomer().getStripeToken(); 
 	    if (stripeToken == null || stripeToken.isEmpty()) {
-	        throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "No Stripe token found for the customer.");
+	        throw new GuardianLifeAssuranceApiException(HttpStatus.BAD_REQUEST, "No Bank details avialable for the customer "+claim.getCustomer().getCustomerId());
 	    }
-
-	    stripeService.processCustomerPayout(stripeToken, sumAssured);
-
+	    
+	    
 	    claim.setStatus(ClaimStatus.APPROVED);
 	    claim.setApprovalDate(LocalDateTime.now());
 	    claimRepository.save(claim);
+	    
+	    emailService.sendClaimApprovalMail(claim);
 
 	    return "Claim approved and payout of sum assured processed.";
 	}
@@ -142,7 +138,18 @@ public class ClaimServiceImpl implements ClaimService {
         return new PagedResponse<>(claimResponseDtos, claims.getNumber(), claims.getSize(),
                                    claims.getTotalElements(), claims.getTotalPages(), claims.isLast());
     }
-
+	private ClaimResponseDto convertEntityToDto(Claim claim) {
+		ClaimResponseDto dto = new ClaimResponseDto();
+		dto.setClaimId(claim.getClaimId());
+		dto.setPolicyNo(claim.getPolicyAccount().getPolicyNo());
+		dto.setClaimAmount(claim.getClaimAmount());
+		dto.setClaimReason(claim.getClaimReason());
+		dto.setStatus(claim.getStatus());
+		dto.setApprovalDate(claim.getApprovalDate());
+		dto.setRejectionDate(claim.getRejectionDate());
+		dto.setClaimDate(claim.getClaimDate());
+		return dto;
+	}
     
 
 }

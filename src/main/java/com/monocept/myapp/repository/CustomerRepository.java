@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.monocept.myapp.entity.Customer;
+import com.monocept.myapp.entity.User;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long>{
 
@@ -20,6 +21,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>{
 		                             @Param("state") String state, 
 		                             @Param("isActive") Boolean isActive, 
 		                             Pageable pageable);
+
+	Customer findByUser(User user);
 
 
 }

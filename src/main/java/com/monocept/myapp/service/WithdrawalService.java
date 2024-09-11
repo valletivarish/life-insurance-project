@@ -2,6 +2,7 @@ package com.monocept.myapp.service;
 
 import java.time.LocalDate;
 
+import com.monocept.myapp.dto.WithdrawalResponseDto;
 import com.monocept.myapp.entity.WithdrawalRequest;
 import com.monocept.myapp.enums.WithdrawalRequestStatus;
 import com.monocept.myapp.util.PagedResponse;
@@ -19,8 +20,11 @@ public interface WithdrawalService {
 			WithdrawalRequestStatus status, LocalDate fromDate, LocalDate toDate, int page, int size, String sortBy,
 			String direction);
 
-	PagedResponse<WithdrawalRequest> getCommissionWithdrawalsWithFilters(int page, int size, String sortBy,
+	PagedResponse<WithdrawalResponseDto> getCommissionWithdrawalsWithFilters(int page, int size, String sortBy,
 			String direction, Long agentId, WithdrawalRequestStatus status, LocalDate fromDate, LocalDate toDate);
+
+
+
 
 
 
