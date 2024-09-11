@@ -2,6 +2,7 @@ package com.monocept.myapp.service;
 
 import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,8 @@ import com.monocept.myapp.repository.CommissionRepository;
 import com.monocept.myapp.repository.InstallmentRepository;
 import com.monocept.myapp.repository.PaymentRepository;
 import com.monocept.myapp.repository.PolicyRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class InstallmentServiceImpl implements InstallmentService {
@@ -46,7 +49,7 @@ public class InstallmentServiceImpl implements InstallmentService {
     private GenerateReceiptService generateReceiptService;
 
     
-
+    @Transactional
     @Override
     public ByteArrayInputStream processInstallmentPayment(InstallmentPaymentRequestDto request) throws DocumentException {
         Installment installment = installmentRepository.findById(request.getInstallmentId())
@@ -88,7 +91,7 @@ public class InstallmentServiceImpl implements InstallmentService {
         }
 
         double commissionRate = policyAccount.getInsuranceScheme().getInstallmentCommRatio();
-        double commissionAmount = amount * commissionRate;
+        double commissionAmount = amount * (commissionRate / 100);
 
         Commission commission = new Commission();
         commission.setAgent(agent);
@@ -96,6 +99,9 @@ public class InstallmentServiceImpl implements InstallmentService {
         commission.setCommissionType(CommissionType.INSTALLMENT);
 
         commissionRepository.save(commission);
+        List<Commission> commissions = agent.getCommissions();
+        commissions.add(commission);
+        agent.setCommissions(commissions);
 
         agent.setTotalCommission(agent.getTotalCommission() + commissionAmount);
         agentRepository.save(agent);

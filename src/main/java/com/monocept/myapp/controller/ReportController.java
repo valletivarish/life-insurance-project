@@ -5,6 +5,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,19 +24,25 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.itextpdf.text.DocumentException;
 import com.monocept.myapp.dto.AgentResponseDto;
+import com.monocept.myapp.dto.CommissionResponseDto;
 import com.monocept.myapp.dto.CustomerResponseDto;
 import com.monocept.myapp.dto.PaymentResponseDto;
+import com.monocept.myapp.dto.WithdrawalResponseDto;
 import com.monocept.myapp.entity.AgentEarnings;
 import com.monocept.myapp.entity.WithdrawalRequest;
+import com.monocept.myapp.enums.CommissionType;
 import com.monocept.myapp.enums.WithdrawalRequestStatus;
 import com.monocept.myapp.service.AgentEarningsReportService;
 import com.monocept.myapp.service.AgentEarningsService;
 import com.monocept.myapp.service.AgentManagementService;
 import com.monocept.myapp.service.AgentReportService;
+import com.monocept.myapp.service.CommissionReportService;
+import com.monocept.myapp.service.CommissionService;
 import com.monocept.myapp.service.CustomerManagementService;
 import com.monocept.myapp.service.CustomerReportService;
 import com.monocept.myapp.service.PaymentReportService;
 import com.monocept.myapp.service.PaymentService;
+import com.monocept.myapp.service.WithdrawalAgentReportService;
 import com.monocept.myapp.service.WithdrawalReportService;
 import com.monocept.myapp.service.WithdrawalService;
 import com.monocept.myapp.util.PagedResponse;
@@ -73,6 +82,11 @@ public class ReportController {
 	@Autowired
 	private AgentEarningsReportService agentEarningsReportService;
 	
+	@Autowired
+	private CommissionReportService commissionReportService;
+	
+	@Autowired
+	private WithdrawalAgentReportService withdrawalAgentReportService;
 	
 	@GetMapping("/customers/pdf")
     @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
@@ -131,12 +145,14 @@ public class ReportController {
             @RequestParam(name = "direction", defaultValue = "ASC") String direction,
             @RequestParam(name = "minAmount", required = false) Double minAmount,
             @RequestParam(name = "maxAmount", required = false) Double maxAmount,
-            @RequestParam(name = "startDate", required = false) LocalDateTime startDate,
-            @RequestParam(name = "endDate", required = false) LocalDateTime endDate,
+            @RequestParam(name = "startDate", defaultValue = "#{T(java.time.LocalDate).now().minusDays(30).toString()}") String startDate,
+            @RequestParam(name = "endDate", defaultValue = "#{T(java.time.LocalDate).now().toString()}") String endDate,
             @RequestParam(name = "customerId", required = false) String customerId,
             @RequestParam(name = "paymentId", required = false) Long paymentId) throws DocumentException, IOException {
+    	LocalDateTime fromDate = parseDate(startDate).atStartOfDay();
+		LocalDateTime toDate = parseDate(endDate).atTime(23, 59, 59);
 
-        List<PaymentResponseDto> payments = paymentService.getAllPaymentsWithFilters(page, size, sortBy, direction, minAmount, maxAmount, startDate, endDate, customerId, paymentId).getContent();
+        List<PaymentResponseDto> payments = paymentService.getAllPaymentsWithFilters(page, size, sortBy, direction, minAmount, maxAmount, fromDate, toDate, customerId, paymentId).getContent();
 
         ByteArrayInputStream pdfStream = paymentReportService.generatePaymentReport(payments);
 
@@ -148,6 +164,18 @@ public class ReportController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdfStream.readAllBytes());
     }
+    private static final List<DateTimeFormatter> FORMATTERS = Arrays.asList(DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+			DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+    private LocalDate parseDate(String dateStr) {
+		for (DateTimeFormatter formatter : FORMATTERS) {
+			try {
+				return LocalDate.parse(dateStr, formatter);
+			} catch (DateTimeParseException e) {
+			}
+		}
+		return LocalDate.now();
+	}
+
     @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
     @GetMapping("withdrawal/pdf")
     @Operation(summary = "Generate Withdrawal Report", description = "Generate a PDF report of withdrawal requests with filters and pagination")
@@ -182,11 +210,34 @@ public class ReportController {
             @RequestParam(name = "fromDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(name = "toDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) throws DocumentException, IOException {
 
-        PagedResponse<WithdrawalRequest> commissionWithdrawals = withdrawalService.getCommissionWithdrawalsWithFilters(page, size, sortBy, direction, agentId, status, fromDate, toDate);
-        ByteArrayInputStream pdfStream = withdrawalReportService.generateWithdrawalReport(commissionWithdrawals.getContent());
+        PagedResponse<WithdrawalResponseDto> commissionWithdrawals = withdrawalService.getCommissionWithdrawalsWithFilters(page, size, sortBy, direction, agentId, status, fromDate, toDate);
+        ByteArrayInputStream pdfStream = withdrawalAgentReportService.generateWithdrawalReport(commissionWithdrawals.getContent());
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "inline; filename=CommissionWithdrawalReport.pdf");
+        return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF).body(pdfStream.readAllBytes());
+    }
+    @Autowired
+    private CommissionService commissionService;
+
+    @GetMapping("/commission/pdf")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
+    public ResponseEntity<byte[]> generateCommissionReport(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "5") int size,
+            @RequestParam(name = "sortBy", defaultValue = "commissionId") String sortBy,
+            @RequestParam(name = "direction", defaultValue = "ASC") String direction,
+            @RequestParam(name = "agentId", required = false) Long agentId,
+            @RequestParam(name = "commissionType", required = false) CommissionType commissionType,
+            @RequestParam(name = "fromDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(name = "toDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(name = "amount", required = false) Double amount) throws DocumentException, IOException {
+
+        PagedResponse<CommissionResponseDto> commissions = commissionService.getCommissionsWithFilters(page, size, sortBy, direction, agentId, commissionType, fromDate, toDate, amount);
+        ByteArrayInputStream pdfStream = commissionReportService.generateCommissionReport(commissions.getContent());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "inline; filename=CommissionReport.pdf");
         return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF).body(pdfStream.readAllBytes());
     }
     @GetMapping("/agent-earnings/pdf")

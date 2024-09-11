@@ -156,7 +156,7 @@ public class CustomerReportService {
 			try {
 				PdfPTable header = new PdfPTable(1);
 				header.setWidthPercentage(100);
-				PdfPCell cell = new PdfPCell(new Phrase("Customer Report - Guardian Life Assurance", HEADER_FONT));
+				PdfPCell cell = new PdfPCell(new Phrase("Report - Guardian Life Assurance", HEADER_FONT));
 				cell.setHorizontalAlignment(Element.ALIGN_CENTER);
 				cell.setBorder(Rectangle.NO_BORDER);
 				header.addCell(cell);

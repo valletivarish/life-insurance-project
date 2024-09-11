@@ -12,8 +12,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.monocept.myapp.dto.ResetPasswordRequestDto;
+import com.monocept.myapp.entity.Claim;
 import com.monocept.myapp.entity.OtpStore;
 import com.monocept.myapp.entity.User;
+import com.monocept.myapp.entity.WithdrawalRequest;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException.ResourceNotFoundException;
 import com.monocept.myapp.repository.OtpRepository;
@@ -104,6 +106,49 @@ public class EmailServiceImpl implements EmailService {
 
 		return "Password updated successfully";
 	}
+
+	public void sendClaimApprovalMail(Claim claim) {
+	    String customerFirstName = claim.getCustomer().getFirstName();
+	    String customerLastName = claim.getCustomer().getLastName();
+	    String customerEmail = claim.getCustomer().getUser().getEmail();
+
+	    String subject = "Guardian Life Assurance - Claim Approved";
+
+	    String body = String.format(
+		        "Dear %s %s,\n\n"
+		        + "We are pleased to inform you that your claim for the policy number %d has been approved. "
+		        + "The claim amount of %.2f will be processed, and you should expect to receive it in your registered account "
+		        + "within 3-5 working days.\n\n"
+		        + "If you have any questions or need further assistance, please don't hesitate to contact us.\n\n"
+		        + "Thank you for trusting Guardian Life Assurance with your insurance needs.\n\n"
+		        + "Best regards,\n"
+		        + "Guardian Life Assurance",
+		        customerFirstName, customerLastName, claim.getPolicyAccount().getPolicyNo(), claim.getClaimAmount()
+		    );
+		    sendEmail(customerEmail, subject, body);
+		}
+
+	public void sendWithdrawalApprovalMail(WithdrawalRequest withdrawal) {
+	    String agentFirstName = withdrawal.getAgent().getFirstName();
+	    String agentLastName = withdrawal.getAgent().getLastName();
+	    String agentEmail = withdrawal.getAgent().getUser().getEmail();
+
+	    String subject = "Guardian Life Assurance - Withdrawal Request Approved";
+
+	    String body = String.format(
+	        "Dear %s %s,\n\n"
+	        + "We are pleased to inform you that your withdrawal request with request ID %d has been approved. "
+	        + "The amount of %.2f will be processed, and you should expect to receive it in your registered account "
+	        + "within 3-5 working days.\n\n"
+	        + "If you have any questions or need further assistance, please don't hesitate to contact us.\n\n"
+	        + "Thank you for trusting Guardian Life Assurance with your services.\n\n"
+	        + "Best regards,\n"
+	        + "Guardian Life Assurance",
+	        agentFirstName, agentLastName, withdrawal.getWithdrawalRequestId(), withdrawal.getAmount()
+	    );
+	    sendEmail(agentEmail, subject, body);
+	}
+
 
 
 }

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.monocept.myapp.dto.WithdrawalResponseDto;
 import com.monocept.myapp.entity.Agent;
 import com.monocept.myapp.entity.AgentEarnings;
 import com.monocept.myapp.entity.Customer;
@@ -38,7 +40,11 @@ public class WithdrawalServiceImpl implements WithdrawalService{
 	@Autowired
 	private StripeService stripeService;
 	
+	@Autowired
 	private AgentWithdrawalHistoryRepository agentWithdrawalHistoryRepository;
+	
+	@Autowired
+	private EmailService emailService;
 
 	@Override
 	public void approveWithdrawal(long withdrawalId) {
@@ -51,18 +57,19 @@ public class WithdrawalServiceImpl implements WithdrawalService{
 					"Only pending withdrawal requests can be approved.");
 		}
 
-		if (withdrawalRequest.getAmount() > 0) {
-			if (withdrawalRequest.getCustomer() != null) {
-				String latestStripeChargeId = getLatestStripeChargeId(withdrawalRequest.getCustomer());
-				stripeService.processStripeRefund(latestStripeChargeId, withdrawalRequest.getAmount());
-			} else if (withdrawalRequest.getAgent() != null) {
-				processAgentCommissionWithdrawal(withdrawalRequest);
-			}
-		}
+//		if (withdrawalRequest.getAmount() > 0) {
+//			if (withdrawalRequest.getCustomer() != null) {
+//				String latestStripeChargeId = getLatestStripeChargeId(withdrawalRequest.getCustomer());
+//				stripeService.processStripeRefund(latestStripeChargeId, withdrawalRequest.getAmount());
+//			} else if (withdrawalRequest.getAgent() != null) {
+//				processAgentCommissionWithdrawal(withdrawalRequest);
+//			}
+//		}
 
 		withdrawalRequest.setStatus(WithdrawalRequestStatus.APPROVED);
 		withdrawalRequest.setApprovedAt(LocalDateTime.now());
 		withdrawalRepository.save(withdrawalRequest);
+		emailService.sendWithdrawalApprovalMail(withdrawalRequest);
 	}
 	private void processAgentCommissionWithdrawal(WithdrawalRequest withdrawalRequest) {
 	    Agent agent = withdrawalRequest.getAgent();
@@ -156,7 +163,7 @@ public class WithdrawalServiceImpl implements WithdrawalService{
                 withdrawalPage.getTotalElements(), withdrawalPage.getTotalPages(), withdrawalPage.isLast());
     }
 	@Override
-    public PagedResponse<WithdrawalRequest> getCommissionWithdrawalsWithFilters(int page, int size, String sortBy, String direction, 
+    public PagedResponse<WithdrawalResponseDto> getCommissionWithdrawalsWithFilters(int page, int size, String sortBy, String direction, 
             Long agentId, WithdrawalRequestStatus status, LocalDate fromDate, LocalDate toDate) {
         Sort sort = direction.equalsIgnoreCase(Sort.Direction.DESC.name()) 
                 ? Sort.by(sortBy).descending() 
@@ -164,10 +171,26 @@ public class WithdrawalServiceImpl implements WithdrawalService{
         PageRequest pageRequest = PageRequest.of(page, size, sort);
 
         Page<WithdrawalRequest> withdrawalPage = withdrawalRepository.findCommissionWithdrawals(agentId, status, fromDate, toDate, pageRequest);
-        List<WithdrawalRequest> withdrawals = withdrawalPage.getContent();
+        List<WithdrawalResponseDto> withdrawals = withdrawalPage.getContent().stream().map(withdrawalRequest->convertWithdrawalToDto(withdrawalRequest)).collect(Collectors.toList());
 
         return new PagedResponse<>(withdrawals, withdrawalPage.getNumber(), withdrawalPage.getSize(), 
                                    withdrawalPage.getTotalElements(), withdrawalPage.getTotalPages(), withdrawalPage.isLast());
+    }
+	private WithdrawalResponseDto convertWithdrawalToDto(WithdrawalRequest withdrawalRequest) {
+		WithdrawalResponseDto responseDto =new WithdrawalResponseDto();
+		responseDto.setAgentId(withdrawalRequest.getAgent().getAgentId());
+		responseDto.setAmount(withdrawalRequest.getAmount());
+		responseDto.setApprovedAt(toLocalDate(withdrawalRequest.getApprovedAt()));
+		responseDto.setRequestDate(toLocalDate(withdrawalRequest.getRequestDate()));
+		responseDto.setWithdrawalRequestId(withdrawalRequest.getWithdrawalRequestId());
+		responseDto.setStatus(withdrawalRequest.getStatus());
+		responseDto.setRequestType(withdrawalRequest.getRequestType());
+		responseDto.setAgentName(withdrawalRequest.getAgent().getFirstName()+" "+withdrawalRequest.getAgent().getLastName());
+		return responseDto;
+	}
+	
+	public static LocalDate toLocalDate(LocalDateTime dateTime) {
+        return dateTime != null ? dateTime.toLocalDate() : null; 
     }
 
 

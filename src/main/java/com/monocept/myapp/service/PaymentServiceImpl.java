@@ -1,5 +1,6 @@
 package com.monocept.myapp.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,8 +49,11 @@ public class PaymentServiceImpl implements PaymentService{
         dto.setAmount(payment.getAmount());
         dto.setCustomerId(payment.getCustomerId());
         dto.setStatus(payment.getStatus());
-        dto.setPaymentDate(payment.getPaymentDate());
+        dto.setPaymentDate(toLocalDate(payment.getPaymentDate()));
         return dto;
+    }
+    public static LocalDate toLocalDate(LocalDateTime dateTime) {
+        return dateTime != null ? dateTime.toLocalDate() : null; 
     }
 
 }

@@ -9,11 +9,12 @@ public class InsuranceSchemeResponseDto {
 
     private String schemeName;
 
-    private String description;
-
-    private long schemeDetailId;
-
     private boolean active;
+    private long planId;
+    
+    private String planName;
+    
+    private String image;
 
     private String detailDescription;
     private Double minAmount;

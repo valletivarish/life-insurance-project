@@ -216,21 +216,9 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 	}
 
 	@Override
-	public String activateCityById(long stateId, long cityId) {
-	    State state = stateRepository.findById(stateId)
-	            .orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
-	                    "Sorry, we couldn't find a state with ID: " + stateId));
+	public String activateCityById(long cityId) {
+		City city = cityRepository.findById(cityId).orElseThrow();
 
-	    if (!state.isActive()) {
-	        throw new GuardianLifeAssuranceApiException(HttpStatus.CONFLICT, 
-	                "State '" + state.getName() + "' is not active. Activate the state before activating cities.");
-	    }
-
-	    City city = state.getCity().stream()
-	            .filter(c -> c.getCityId() == cityId)
-	            .findFirst()
-	            .orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
-	                    "Sorry, we couldn't find a city with ID: " + cityId + " in state with ID: " + stateId));
 
 	    if (city.isActive()) {
 	        throw new GuardianLifeAssuranceApiException(HttpStatus.CONFLICT, 

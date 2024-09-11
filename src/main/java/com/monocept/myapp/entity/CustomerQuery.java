@@ -1,5 +1,10 @@
 package com.monocept.myapp.entity;
 
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,7 +20,7 @@ import lombok.Data;
 @Entity
 @Table(name = "query")
 @Data
-public class Query {
+public class CustomerQuery {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,6 +42,18 @@ public class Query {
     private boolean resolved = false;
 
     @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REFRESH})
+    @JoinColumn(name = "resolved_by_employee_id", referencedColumnName = "employeeId")
+    private Employee resolvedBy;
+
+    @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REFRESH})
     @JoinColumn(name = "customerId", referencedColumnName = "customerId")
     private Customer customer;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "resolved_at")
+    private LocalDateTime resolvedAt;
 }

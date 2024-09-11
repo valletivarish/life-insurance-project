@@ -54,4 +54,11 @@ public interface CustomerManagementService {
 	PagedResponse<CustomerResponseDto> getAllCustomersWithFilters(int page, int size, String sortBy, String direction, String name, String city,
 			String state, Boolean isActive);
 
+	String activateCustomer(long customerId);
+
+	PagedResponse<PolicyAccountResponseDto> getAllPolicies(int page, int size, String sortBy, String direction);
+
+	PagedResponse<QueryResponseDto> getAllQueries(int page, int size, String sortBy, String direction, String search,
+			Boolean resolved);
+
 }

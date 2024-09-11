@@ -32,6 +32,6 @@ public interface StateAndCityManagementService {
 
 	String activateStateById(long id);
 
-	String activateCityById(long id, long cityId);
+	String activateCityById(long id);
 
 }
