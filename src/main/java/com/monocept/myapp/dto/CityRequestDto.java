@@ -14,5 +14,5 @@ public class CityRequestDto {
     private String name;
 
     @NotNull(message = "Active status is required.")
-    private boolean active;
+    private boolean active=true;
 }

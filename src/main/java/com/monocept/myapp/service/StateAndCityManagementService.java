@@ -34,4 +34,6 @@ public interface StateAndCityManagementService {
 
 	String activateCityById(long id);
 
+	Long getCount();
+
 }

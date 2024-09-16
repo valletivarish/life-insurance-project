@@ -1,12 +1,17 @@
 package com.monocept.myapp.service;
 
-import java.io.ByteArrayInputStream;
-
 import com.itextpdf.text.DocumentException;
 import com.monocept.myapp.dto.InstallmentPaymentRequestDto;
+import com.monocept.myapp.entity.Installment;
+import com.monocept.myapp.entity.Payment;
 
 public interface InstallmentService {
 
-	ByteArrayInputStream processInstallmentPayment(InstallmentPaymentRequestDto paymentRequest) throws DocumentException;
+	long processInstallmentPayment(InstallmentPaymentRequestDto paymentRequest) throws DocumentException;
+
+	Installment findInstallmentById(Long installmentId);
+
+
+	Payment getPaymentByInstallment(Installment installment);
 
 }

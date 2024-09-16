@@ -2,7 +2,6 @@ package com.monocept.myapp.service;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -107,7 +106,7 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 	}
 
 	@Override
-	public EmployeeResponseDto updateEmployee(EmployeeRequestDto employeeRequestDto) {
+	public String updateEmployee(EmployeeRequestDto employeeRequestDto) {
 		Employee employee = employeeRepository.findById(employeeRequestDto.getEmployeeId())
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("Sorry, we couldn't find an employee with ID: " + employeeRequestDto.getEmployeeId()));
 		User user = employee.getUser();
@@ -119,7 +118,8 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 			employee.setFirstName(employeeRequestDto.getFirstName());
 		}
 		userRepository.save(user);
-		return convertEmployeeToEmployeeResponseDto(employeeRepository.save(employee));
+		convertEmployeeToEmployeeResponseDto(employeeRepository.save(employee));
+		return "Employee with id "+employeeRequestDto.getEmployeeId()+" updated successfully";
 	}
 
 	@Override
@@ -199,6 +199,20 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
 	    documentRepository.save(document);
 
 	    return "The document with ID " + documentId + " has been reviewed and rejected by employee " + employee.getFirstName() + " " + employee.getLastName() + ". Please provide a clearer document for further processing.";
+	}
+
+	@Override
+	public EmployeeResponseDto getEmployeeProfile() {
+		User user = userRepository.findByUsernameOrEmail(getUserNameOrEmailFromSecurityContext(), getUserNameOrEmailFromSecurityContext()).orElseThrow(()->new GuardianLifeAssuranceException.UserNotFoundException("User not found"));
+		return convertEmployeeToEmployeeResponseDto(employeeRepository.findByUser(user));
+	}
+	private String getUserNameOrEmailFromSecurityContext() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+			UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+			return userDetails.getUsername();
+		}
+		return null;
 	}
 
 

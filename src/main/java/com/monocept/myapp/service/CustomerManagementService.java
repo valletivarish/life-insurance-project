@@ -61,4 +61,9 @@ public interface CustomerManagementService {
 	PagedResponse<QueryResponseDto> getAllQueries(int page, int size, String sortBy, String direction, String search,
 			Boolean resolved);
 
+	int calculateCustomerAgeByUser(String username);
+
+	PagedResponse<CustomerResponseDto> getAllCustomersByAgentWithFilters(int page, int size, String sortBy, String direction, String name,
+			String city, String state, Boolean isActive);
+
 }

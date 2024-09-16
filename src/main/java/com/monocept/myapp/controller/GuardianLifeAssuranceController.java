@@ -77,5 +77,14 @@ public class GuardianLifeAssuranceController {
 				stateAndCityManagementService.getAllStates(page, size, sortBy, direction), HttpStatus.OK);
 
 	}
+	@GetMapping("states/count")
+	public ResponseEntity<Long> getStateCount(){
+		return new ResponseEntity<Long>(stateAndCityManagementService.getCount(),HttpStatus.OK);
+	}
+	@GetMapping("/insurance-plans/count")
+	public ResponseEntity<Long> getPlanCount() {
+		return new ResponseEntity<Long>(insuranceManagementService.getPlanCount(),HttpStatus.OK);
+	}
+	
 
 }

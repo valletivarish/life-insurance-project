@@ -232,6 +232,11 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 	    return "City '" + city.getName() + "' has been successfully activated.";
 	}
 
+	@Override
+	public Long getCount() {
+		return stateRepository.count();
+	}
+
 
 	
 

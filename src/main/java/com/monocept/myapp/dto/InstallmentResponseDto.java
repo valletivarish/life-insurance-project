@@ -10,6 +10,7 @@ import lombok.Data;
 public class InstallmentResponseDto {
     private Long installmentId;
     private LocalDate dueDate;
+    private LocalDate paymentDate;
     private Double amountDue;
     private Double amountPaid;
     private InstallmentStatus status;

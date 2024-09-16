@@ -112,7 +112,14 @@ public class AuthServiceImpl implements AuthService {
 
 	@Override
 	public String changePassword(ChangePasswordRequestDto changePasswordRequestDto) {
+		System.out.println(changePasswordRequestDto);
+		 if (changePasswordRequestDto.getNewPassword() == null || 
+			        changePasswordRequestDto.getExistingPassword() == null || 
+			        changePasswordRequestDto.getConfirmPassword() == null) {
+			        throw new IllegalArgumentException("Password fields cannot be null");
+			    }
 		String userNameOrEmail = getEmailFromSecurityContext();
+		System.out.println(userNameOrEmail);
 		User user = userRepository.findByUsernameOrEmail(userNameOrEmail, userNameOrEmail).orElse(null);
 
 		if (user == null) {
@@ -141,7 +148,7 @@ public class AuthServiceImpl implements AuthService {
 	    User user = userRepository.findByEmail(email).orElse(null);
 	    
 	    if (user == null) {
-	        return null; // Return null if user is not found
+	        return null;
 	    }
 
 	    String fullName = "User";

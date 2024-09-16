@@ -1,5 +1,6 @@
 package com.monocept.myapp.service;
 
+import java.io.IOException;
 import java.util.List;
 
 import com.monocept.myapp.dto.ClaimRequestDto;
@@ -11,7 +12,7 @@ public interface ClaimService {
 
 
 
-	ClaimResponseDto createCustomerClaim(Long customerId, ClaimRequestDto claimRequestDto);
+	ClaimResponseDto createCustomerClaim(Long customerId, ClaimRequestDto claimRequestDto) throws IOException;
 
 	List<ClaimResponseDto> getAllClaimsByCustomerId(Long customerId);
 
@@ -21,5 +22,7 @@ public interface ClaimService {
 
 	PagedResponse<ClaimResponseDto> getAllClaimsWithFilters(int page, int size, String sortBy, String direction,
 			ClaimStatus status, Long customerId, Long policyNo);
+
+	PagedResponse<ClaimResponseDto> getAgentClaims(int page, int size, String sortBy, String direction);
 
 }

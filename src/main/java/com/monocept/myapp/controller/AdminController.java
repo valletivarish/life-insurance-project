@@ -113,10 +113,7 @@ public class AdminController {
 		return ResponseEntity.ok("Withdrawal request rejected successfully.");
 	}
 
-	@PutMapping("change-password")
-	public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequestDto changePasswordRequestDto) {
-		return new ResponseEntity<String>(authService.changePassword(changePasswordRequestDto), HttpStatus.OK);
-	}
+
 
 	@PutMapping
 	public ResponseEntity<String> updateAdmin(@RequestBody @Valid AdminRequestDto adminRequestDto) {
@@ -128,10 +125,11 @@ public class AdminController {
 		return new ResponseEntity<>(adminService.deleteAdmin(adminId), HttpStatus.OK);
 	}
 
-	@GetMapping("/{adminId}")
-	public ResponseEntity<AdminResponseDto> getAdmin(@PathVariable long adminId) {
-		return new ResponseEntity<>(adminService.getAdmin(adminId), HttpStatus.OK);
+	@GetMapping("/profile")
+	public ResponseEntity<AdminResponseDto> getAdminProfile() {
+	    return new ResponseEntity<>(adminService.getAdminByUsername(), HttpStatus.OK);
 	}
+
 
 	@PostMapping
 	public ResponseEntity<String> addAdmin(@RequestBody @Valid AdminRequestDto adminRequestDto) {
@@ -214,6 +212,7 @@ public class AdminController {
 	}
 
 	@DeleteMapping("cities/{cityId}")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
 	@Operation(summary = "Deactivate a city", description = "Mark a city as inactive by its ID")
 	public ResponseEntity<String> deactivateCity(@PathVariable long cityId) {
 		return new ResponseEntity<String>(stateAndCityManagementService.deactivateCity(cityId), HttpStatus.OK);
@@ -400,7 +399,7 @@ public class AdminController {
                description = "Retrieve all insurance schemes with pagination, sorting, and optional filters")
     public ResponseEntity<PagedResponse<InsuranceSchemeResponseDto>> getAllSchemes(
             @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "5") int size,
+            @RequestParam(name = "size", defaultValue = "100") int size,
             @RequestParam(name = "sortBy", defaultValue = "schemeName") String sortBy,
             @RequestParam(name = "direction", defaultValue = "ASC") String direction,
             @RequestParam(name = "minAmount", required = false) Double minAmount,
@@ -434,7 +433,6 @@ public class AdminController {
 	
 	@GetMapping("/commission-withdrawal")
     @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
-    @Operation(summary = "Generate Commission Withdrawal Report", description = "Generate a PDF report of commission withdrawals with pagination and filters")
     public ResponseEntity<PagedResponse<WithdrawalResponseDto>> generateCommissionWithdrawal(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "5") int size,
@@ -475,14 +473,14 @@ public class AdminController {
 
 
     @GetMapping("/commissions/types")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE') or hasRole('AGENT')")
     public ResponseEntity<List<CommissionType>> getCommissionTypes() {
         List<CommissionType> commissionTypes = Arrays.asList(CommissionType.values());
         return ResponseEntity.ok(commissionTypes);
     }
     
     @GetMapping("/commission-withdrawal/status")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE') or hasRole('AGENT')")
     public ResponseEntity<List<WithdrawalRequestStatus>> getWithdrawalTypes() {
         List<WithdrawalRequestStatus> commissionTypes = Arrays.asList(WithdrawalRequestStatus.values());
         return ResponseEntity.ok(commissionTypes);
@@ -490,8 +488,8 @@ public class AdminController {
     @GetMapping("/documents-required")
     @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
     public ResponseEntity<List<DocumentType>> getDocumentsRequired() {
-        List<DocumentType> commissionTypes = Arrays.asList(DocumentType.values());
-        return ResponseEntity.ok(commissionTypes);
+        List<DocumentType> documentTypes = Arrays.asList(DocumentType.values());
+        return ResponseEntity.ok(documentTypes);
     }
 
     @GetMapping("counts")

@@ -7,8 +7,10 @@ public enum DocumentType {
     DRIVING_LICENSE,
     VOTER_ID,
     BANK_STATEMENT,
-    UTILITY_BILL,
-    INCOME_TAX_RETURN,
-    RENTAL_AGREEMENT,
-    BIRTH_CERTIFICATE
+    INCOME_TAX_RETURN,          
+    BIRTH_CERTIFICATE,    
+    PROOF_OF_AGE,              
+    PROOF_OF_INCOME,           
+    RETIREMENT_PROOF,           
 }
+

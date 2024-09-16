@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.monocept.myapp.dto.AdminResponseDto;
 import com.monocept.myapp.dto.AgentRequestDto;
 import com.monocept.myapp.dto.AgentResponseDto;
 import com.monocept.myapp.dto.ChangePasswordRequestDto;
@@ -71,16 +72,13 @@ public class EmployeeController {
 	@Autowired
 	private DocumentService documentService;
 	
-	@PutMapping("change-password")
-	public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequestDto changePasswordRequestDto){
-		return new ResponseEntity<String>(authService.changePassword(changePasswordRequestDto),HttpStatus.OK);
-	}
+
 	
 	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
 	@PutMapping
 	@Operation(summary = "Update employee details", description = "Update the details of an existing employee")
-	public ResponseEntity<EmployeeResponseDto> updateEmployee(@RequestBody EmployeeRequestDto employeeRequestDto) {
-		return new ResponseEntity<EmployeeResponseDto>(employeeManagementService.updateEmployee(employeeRequestDto),
+	public ResponseEntity<String> updateEmployee(@RequestBody EmployeeRequestDto employeeRequestDto) {
+		return new ResponseEntity<String>(employeeManagementService.updateEmployee(employeeRequestDto),
 				HttpStatus.OK);
 	}
 	
@@ -216,7 +214,10 @@ public class EmployeeController {
                 .header(HttpHeaders.CONTENT_TYPE, "image/jpeg")
                 .body(content);
 	}
-
+	@GetMapping("/profile")
+	public ResponseEntity<EmployeeResponseDto> getEmployeeByUsername() {
+	    return new ResponseEntity<EmployeeResponseDto>(employeeManagementService.getEmployeeProfile(), HttpStatus.OK);
+	}
 
 
 

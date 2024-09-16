@@ -11,10 +11,12 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.monocept.myapp.dto.ChangePasswordRequestDto;
 import com.monocept.myapp.dto.CustomerRequestDto;
 import com.monocept.myapp.dto.ForgetPasswordRequestDto;
 import com.monocept.myapp.dto.JwtResponse;
@@ -97,5 +99,9 @@ public class AuthController {
 	public ResponseEntity<String> retrieveBalance() {
 		Balance balance = service.retrieveBalance();
 		return ResponseEntity.ok(balance.toJson());
+	}
+	@PutMapping("change-password")
+	public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequestDto changePasswordRequestDto) {
+		return new ResponseEntity<String>(authService.changePassword(changePasswordRequestDto), HttpStatus.OK);
 	}
 }
