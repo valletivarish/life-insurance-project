@@ -1,5 +1,7 @@
 package com.monocept.myapp.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,5 +31,7 @@ public interface InsuranceSchemeRepository extends JpaRepository<InsuranceScheme
             Pageable pageable);
 
 	Page<InsuranceScheme> findByInsurancePlan_PlanId(Long planId, Pageable pageable);
+	
+	List<InsuranceScheme> findByInsurancePlan_PlanId(Long planId);
 
 }

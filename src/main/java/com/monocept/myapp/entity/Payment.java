@@ -13,6 +13,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
@@ -42,4 +44,8 @@ public class Payment {
 	@CreationTimestamp
 	@Column(name = "paymentDate", nullable = false, updatable = false)
 	private LocalDateTime paymentDate;
+	
+	@ManyToOne
+    @JoinColumn(name = "policyNo", referencedColumnName = "policyNo")
+    private PolicyAccount policyAccount;
 }

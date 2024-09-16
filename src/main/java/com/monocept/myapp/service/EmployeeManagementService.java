@@ -10,7 +10,7 @@ public interface EmployeeManagementService {
 
 	PagedResponse<EmployeeResponseDto> getAllEmployees(int page, int size, String sortBy, String direction, String name, Boolean isActive);
 
-	EmployeeResponseDto updateEmployee(EmployeeRequestDto employeeRequestDto);
+	String updateEmployee(EmployeeRequestDto employeeRequestDto);
 
 	String deactivateEmployee(long employeeId);
 
@@ -19,5 +19,7 @@ public interface EmployeeManagementService {
 	String verifyDocument(int documentId);
 
 	String rejectDocument(int documentId);
+
+	EmployeeResponseDto getEmployeeProfile();
 
 }

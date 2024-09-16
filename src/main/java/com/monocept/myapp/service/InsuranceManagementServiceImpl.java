@@ -11,6 +11,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,12 +23,16 @@ import com.monocept.myapp.dto.InsuranceSchemeRequestDto;
 import com.monocept.myapp.dto.InsuranceSchemeResponseDto;
 import com.monocept.myapp.dto.InterestCalculatorRequestDto;
 import com.monocept.myapp.dto.InterestCalculatorResponseDto;
+import com.monocept.myapp.dto.ReferralEmailRequestDto;
+import com.monocept.myapp.entity.Agent;
 import com.monocept.myapp.entity.InsurancePlan;
 import com.monocept.myapp.entity.InsuranceScheme;
+import com.monocept.myapp.entity.TaxSetting;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
 import com.monocept.myapp.repository.InsurancePlanRepository;
 import com.monocept.myapp.repository.InsuranceSchemeRepository;
+import com.monocept.myapp.repository.TaxSettingRepository;
 import com.monocept.myapp.util.ImageUtil;
 import com.monocept.myapp.util.PagedResponse;
 
@@ -37,6 +44,8 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 
 	@Autowired
 	private InsuranceSchemeRepository insuranceSchemeRepository;
+	@Autowired
+	private TaxSettingRepository taxSettingRepository;
 
 	@Override
 	public String createInsurancePlan(InsurancePlanRequestDto insurancePlanRequestDto) {
@@ -200,35 +209,41 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 				
 		return convertToDto(insuranceScheme);
 	}
+	
+	
 
 	@Override
 	public InterestCalculatorResponseDto calculateInterest(InterestCalculatorRequestDto interestCalculatorDto) {
 
-		InsuranceScheme insuranceScheme = insuranceSchemeRepository.findById(interestCalculatorDto.getSchemeId())
-				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
-						"Sorry, we couldn't find an Insurance Scheme with ID: " + interestCalculatorDto.getSchemeId()));
+	    InsuranceScheme insuranceScheme = insuranceSchemeRepository.findById(interestCalculatorDto.getSchemeId())
+	            .orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+	                    "Sorry, we couldn't find an Insurance Scheme with ID: " + interestCalculatorDto.getSchemeId()));
 
-		validateInvestmentAmount(interestCalculatorDto.getInvestAmount(), insuranceScheme);
+	    validateInvestmentAmount(interestCalculatorDto.getInvestAmount(), insuranceScheme);
+	    validatePolicyTerm(interestCalculatorDto.getYears(), insuranceScheme);
 
-		validatePolicyTerm(interestCalculatorDto.getYears(), insuranceScheme);
+	    InterestCalculatorResponseDto responseDto = new InterestCalculatorResponseDto();
 
-		InterestCalculatorResponseDto responseDto = new InterestCalculatorResponseDto();
+	    TaxSetting taxSetting = taxSettingRepository.findTopByOrderByUpdatedAtDesc();
+	    double taxPercentage = taxSetting.getTaxPercentage();
 
-		long totalInstallments = calculateTotalInstallments(interestCalculatorDto.getYears(),
-				interestCalculatorDto.getMonths());
-		responseDto.setNoOfInstallments(totalInstallments);
+	    long totalInstallments = calculateTotalInstallments(interestCalculatorDto.getYears(),
+	            interestCalculatorDto.getMonths());
+	    responseDto.setNoOfInstallments(totalInstallments);
 
-		double installmentAmount = interestCalculatorDto.getInvestAmount() / totalInstallments;
-		responseDto.setInstallmentAmount(installmentAmount);
+	    double baseInstallmentAmount = interestCalculatorDto.getInvestAmount() / totalInstallments;
 
-		double interestAmount = calculateInterestAmount(interestCalculatorDto.getInvestAmount(),
-				insuranceScheme.getProfitRatio());
-		responseDto.setInterestAmount(interestAmount);
+	    double installmentAmountWithTax = baseInstallmentAmount + (baseInstallmentAmount * taxPercentage / 100);
+	    responseDto.setInstallmentAmount(installmentAmountWithTax);
 
-		double assuredAmount = interestCalculatorDto.getInvestAmount() + interestAmount;
-		responseDto.setAssuredAmount(assuredAmount);
+	    double interestAmount = calculateInterestAmount(interestCalculatorDto.getInvestAmount(),
+	            insuranceScheme.getProfitRatio());
+	    responseDto.setInterestAmount(interestAmount);
 
-		return responseDto;
+	    double assuredAmount = interestCalculatorDto.getInvestAmount() + interestAmount;
+	    responseDto.setAssuredAmount(assuredAmount);
+
+	    return responseDto;
 	}
 
 	private void validateInvestmentAmount(double investAmount, InsuranceScheme schemeDetail) {
@@ -326,4 +341,19 @@ public class InsuranceManagementServiceImpl implements InsuranceManagementServic
 	public InsuranceScheme getSchemeImageById(long schemeId) {
 		return insuranceSchemeRepository.findById(schemeId).orElse(null);
 	}
+
+	@Override
+	public Long getPlanCount() {
+		return insurancePlanRepository.count();
+	}
+
+	@Override
+	public List<InsuranceSchemeResponseDto> getSchemesByPlanId(Long planId) {
+		List<InsuranceScheme> schemes = insuranceSchemeRepository.findByInsurancePlan_PlanId(planId);
+		return schemes.stream().map(scheme->convertSchemeToSchemeResponseDto(scheme)).collect(Collectors.toList());
+	}
+
+
+	
+	
 }

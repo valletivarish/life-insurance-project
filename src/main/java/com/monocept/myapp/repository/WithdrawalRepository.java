@@ -1,6 +1,7 @@
 package com.monocept.myapp.repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,8 +36,8 @@ public interface WithdrawalRepository extends JpaRepository<WithdrawalRequest, L
             + "AND (:toDate IS NULL OR w.requestDate <= :toDate)")
     Page<WithdrawalRequest> findCommissionWithdrawals(@Param("agentId") Long agentId,
                                                       @Param("status") WithdrawalRequestStatus status, 
-                                                      @Param("fromDate") LocalDate fromDate, 
-                                                      @Param("toDate") LocalDate toDate, 
+                                                      @Param("fromDate") LocalDateTime fromDateTime, 
+                                                      @Param("toDate") LocalDateTime toDateTime, 
                                                       PageRequest pageRequest);
 
 

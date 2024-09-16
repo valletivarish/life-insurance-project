@@ -3,13 +3,15 @@ package com.monocept.myapp.dto;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.monocept.myapp.entity.Address;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.monocept.myapp.enums.PolicyStatus;
 import com.monocept.myapp.enums.PremiumType;
 
 import lombok.Data;
 
 @Data
+@JsonInclude(value = Include.NON_NULL)
 public class PolicyAccountResponseDto {
 	private String customerName;
 	private String customerCity;
@@ -23,7 +25,6 @@ public class PolicyAccountResponseDto {
 	private LocalDate DateCreated;
 	private LocalDate maturityDate;
 	private PremiumType premiumType;
-	private Address address;
 	private double premiumAmount;
 	private double profitRatio;
 	private double sumAssured;

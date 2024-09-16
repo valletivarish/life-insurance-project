@@ -22,6 +22,8 @@ public interface AdminService {
 
 	AdminResponseDto getAdmin(long adminId);
 
+	AdminResponseDto getAdminByUsername();
+
 	
 
 }

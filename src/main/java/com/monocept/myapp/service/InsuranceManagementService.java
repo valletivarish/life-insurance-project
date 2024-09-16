@@ -12,6 +12,7 @@ import com.monocept.myapp.dto.InsuranceSchemeRequestDto;
 import com.monocept.myapp.dto.InsuranceSchemeResponseDto;
 import com.monocept.myapp.dto.InterestCalculatorRequestDto;
 import com.monocept.myapp.dto.InterestCalculatorResponseDto;
+import com.monocept.myapp.dto.ReferralEmailRequestDto;
 import com.monocept.myapp.entity.InsuranceScheme;
 import com.monocept.myapp.util.PagedResponse;
 
@@ -47,6 +48,11 @@ public interface InsuranceManagementService {
 	Page<InsuranceSchemeResponseDto> getSchemesByPlanId(Long planId, int page, int size);
 
 	InsuranceScheme getSchemeImageById(long schemeId);
+
+	Long getPlanCount();
+
+	List<InsuranceSchemeResponseDto> getSchemesByPlanId(Long planId);
+
 
 
 

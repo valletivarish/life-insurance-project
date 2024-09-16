@@ -23,6 +23,11 @@ public interface WithdrawalService {
 	PagedResponse<WithdrawalResponseDto> getCommissionWithdrawalsWithFilters(int page, int size, String sortBy,
 			String direction, Long agentId, WithdrawalRequestStatus status, LocalDate fromDate, LocalDate toDate);
 
+	PagedResponse<WithdrawalResponseDto> getCommissionWithdrawalsWithFilters(int page, int size, String sortBy,
+			String direction, WithdrawalRequestStatus status, LocalDate fromDate, LocalDate toDate);
+
+
+
 
 
 

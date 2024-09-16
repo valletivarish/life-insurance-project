@@ -10,16 +10,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.monocept.myapp.dto.AgentRequestDto;
 import com.monocept.myapp.dto.AgentResponseDto;
 import com.monocept.myapp.dto.CommissionResponseDto;
+import com.monocept.myapp.dto.ReferralEmailRequestDto;
 import com.monocept.myapp.entity.Address;
 import com.monocept.myapp.entity.Agent;
 import com.monocept.myapp.entity.City;
 import com.monocept.myapp.entity.Commission;
+import com.monocept.myapp.entity.Customer;
 import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.State;
 import com.monocept.myapp.entity.User;
@@ -28,6 +33,7 @@ import com.monocept.myapp.exception.GuardianLifeAssuranceException;
 import com.monocept.myapp.repository.AddressRepository;
 import com.monocept.myapp.repository.AgentRepository;
 import com.monocept.myapp.repository.CityRepository;
+import com.monocept.myapp.repository.CustomerRepository;
 import com.monocept.myapp.repository.RoleRepository;
 import com.monocept.myapp.repository.StateRepository;
 import com.monocept.myapp.repository.UserRepository;
@@ -53,9 +59,16 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 
 	@Autowired
 	private CityRepository cityRepository;
+	
+	@Autowired
+	private EmailServiceImpl emailService;
 
 	@Autowired
 	private RoleRepository roleRepository;
+	
+	
+	@Autowired
+	private CustomerRepository customerRepository;
 
 	@Override
 	public String createAgent(AgentRequestDto agentRequestDto) {
@@ -196,6 +209,61 @@ public class AgentManagementServiceImpl implements AgentManagementService {
 		agentRepository.save(agent);
 		return "Agent with ID " + agentId + " has been successfully deactivated.";
 	}
+	private Agent getAgentFromSecurityContext() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+			UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+			
+			return agentRepository.findByUser(
+				    userRepository.findByUsernameOrEmail(
+				        userDetails.getUsername(), 
+				        userDetails.getUsername()
+				    ).orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("User not found"))
+				);
+		}
+		throw new GuardianLifeAssuranceException.UserNotFoundException("agent not found");
+	}
+
+	@Override
+	public AgentResponseDto getAgentProfile() {
+		long agentId = getAgentFromSecurityContext().getAgentId();
+		Agent agent = agentRepository.findById(agentId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
+						"Sorry, we couldn't find an agent with ID: " + agentId));
+		return convertAgentToAgentResponseDto(agent);
+	}
+
+	@Override
+	public String sendRecommendationEmail(ReferralEmailRequestDto referralEmailRequestDto) {
+	    Customer customer = customerRepository.findById(referralEmailRequestDto.getCustomerId())
+	        .orElseThrow(() -> new GuardianLifeAssuranceApiException(HttpStatus.NOT_FOUND, "Customer not found"));
+	    Agent agent = getAgentFromSecurityContext();
+	    String customerFirstName = customer.getFirstName();
+	    String customerLastName = customer.getLastName();
+	    Long agentId = agent.getAgentId();
+
+	    String referralLinkWithAgent = referralEmailRequestDto.getReferralLink() + "?AgentID=" + agentId;
+
+	    String subject = "Guardian Life Assurance - Plan Recommendation";
+	    String body = String.format(
+	        "Dear %s %s,\n\n" +
+	        "Our trusted agent, %s %s, has recommended an insurance plan tailored to your needs. " +
+	        "Please click the link below to view the details and proceed with the purchase:\n\n" +
+	        "%s\n\n" +
+	        "If you have any questions, please feel free to contact us.\n\n" +
+	        "Thank you for choosing Guardian Life Assurance.\n\n" +
+	        "Best regards,\n" +
+	        "Guardian Life Assurance",
+	        customerFirstName, customerLastName, agent.getFirstName(), agent.getLastName(), referralLinkWithAgent
+	    );
+
+	    emailService.sendEmail(referralEmailRequestDto.getRecipientEmail(), subject, body);
+	    
+	    return "Recommendation email sent successfully";
+	}
+
+	
+	
 
 	
 

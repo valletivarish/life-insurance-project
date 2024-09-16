@@ -12,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
@@ -36,8 +37,12 @@ public class Claim {
     @Column(nullable = false)
     private LocalDateTime claimDate;
 
-    @Column(nullable = false)
+    @Column(length = 65535, columnDefinition = "TEXT")
     private String claimReason;
+    
+    @Lob
+    @Column(name = "document", nullable = true,columnDefinition = "LONGBLOB") 
+    private byte[] document;
 
     @Column(nullable = false)
     private double claimAmount;

@@ -2,6 +2,7 @@ package com.monocept.myapp.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -33,17 +35,23 @@ import com.monocept.myapp.dto.ClaimResponseDto;
 import com.monocept.myapp.dto.CustomerRequestDto;
 import com.monocept.myapp.dto.CustomerResponseDto;
 import com.monocept.myapp.dto.CustomerSideQueryRequestDto;
-import com.monocept.myapp.dto.InstallmentPaymentRequestDto;
+import com.monocept.myapp.dto.DocumentRequestDto;
+import com.monocept.myapp.dto.DocumentResponseDto;
 import com.monocept.myapp.dto.InsuranceSchemeResponseDto;
 import com.monocept.myapp.dto.PolicyAccountRequestDto;
 import com.monocept.myapp.dto.PolicyAccountResponseDto;
 import com.monocept.myapp.dto.QueryResponseDto;
 import com.monocept.myapp.entity.Document;
+import com.monocept.myapp.entity.Installment;
 import com.monocept.myapp.entity.InsuranceScheme;
+import com.monocept.myapp.entity.Payment;
+import com.monocept.myapp.entity.PolicyAccount;
 import com.monocept.myapp.enums.DocumentType;
 import com.monocept.myapp.service.AuthService;
 import com.monocept.myapp.service.ClaimService;
 import com.monocept.myapp.service.CustomerManagementService;
+import com.monocept.myapp.service.DocumentService;
+import com.monocept.myapp.service.GenerateReceiptService;
 import com.monocept.myapp.service.InstallmentService;
 import com.monocept.myapp.service.InsuranceManagementService;
 import com.monocept.myapp.util.ImageUtil;
@@ -68,14 +76,22 @@ public class CustomerController {
 	
 	@Autowired
 	private InsuranceManagementService insuranceManagementService;
+	
+	@Autowired
+	private GenerateReceiptService generateReceiptService;
+	
+	@Autowired
+	private DocumentService documentService;
+	
 
-	@PreAuthorize("hasRole('CUSTOMER')")
+
+
 	@PutMapping("change-password")
 	public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequestDto changePasswordRequestDto) {
 		return new ResponseEntity<String>(authService.changePassword(changePasswordRequestDto), HttpStatus.OK);
 	}
 
-	@PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+	@PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN') or hasRole('AGENT')")
 	@GetMapping("/{customerID}")
 	@Operation(summary = "Get customer details by ID", description = "Fetch customer details using customer ID")
 	public ResponseEntity<CustomerResponseDto> getCustomerIdById(@PathVariable long customerID) {
@@ -90,7 +106,7 @@ public class CustomerController {
 	}
 
 	@GetMapping
-	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE') or hasRole('AGENT')")
 	@Operation(summary = "Get all customers with pagination and filtering", description = "Retrieve all customers with pagination, sorting, and optional search filters")
 	public ResponseEntity<PagedResponse<CustomerResponseDto>> getAllCustomer(
 			@RequestParam(name = "page", defaultValue = "0") int page,
@@ -170,7 +186,7 @@ public class CustomerController {
 	}
 
 	@PreAuthorize("hasRole('CUSTOMER')")
-	@PostMapping("/{customerId}/query")
+	@PostMapping("/{customerId}/queries")
 	@Operation(summary = "Create a query for a customer", description = "Create a query for customer-related issues or inquiries")
 	public ResponseEntity<String> createCustomerQuery(@PathVariable(name = "customerId") long customerId,
 			@RequestBody CustomerSideQueryRequestDto customerSideQueryRequestDto) {
@@ -221,11 +237,14 @@ public class CustomerController {
 
 	@PostMapping("{customerId}/claims")
 	@PreAuthorize("hasRole('CUSTOMER')")
-	public ResponseEntity<ClaimResponseDto> createClaim(@PathVariable Long customerId,
-			@RequestBody ClaimRequestDto claimRequestDto) {
-		ClaimResponseDto claimResponseDto = claimService.createCustomerClaim(customerId, claimRequestDto);
-		return ResponseEntity.ok(claimResponseDto);
+	public ResponseEntity<ClaimResponseDto> createClaim(
+	        @PathVariable Long customerId,
+	        @ModelAttribute ClaimRequestDto claimRequestDto) throws IOException {
+
+	    ClaimResponseDto claimResponseDto = claimService.createCustomerClaim(customerId, claimRequestDto);
+	    return ResponseEntity.ok(claimResponseDto);
 	}
+
 
 	@GetMapping("/{customerId}/claims")
 	@PreAuthorize("hasRole('CUSTOMER')")
@@ -241,23 +260,24 @@ public class CustomerController {
 		return new ResponseEntity<String>(customerManagementService.cancelPolicy(customerId, policyNo), HttpStatus.OK);
 	}
 
-	@PostMapping("{customerId}/policies/installments/{installmentId}/pay")
-	@PreAuthorize("hasRole('CUSTOMER')")
-	public ResponseEntity<byte[]> payInstallment(@PathVariable Long customerId, @PathVariable Long installmentId,
-			@RequestBody InstallmentPaymentRequestDto paymentRequest) throws DocumentException, IOException {
-
-		paymentRequest.setInstallmentId(installmentId);
-		paymentRequest.setCustomerId(customerId);
-
-		ByteArrayInputStream receiptStream = installmentService.processInstallmentPayment(paymentRequest);
-
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Content-Disposition", "inline; filename=InstallmentReceipt.pdf");
-
-		return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
-				.body(receiptStream.readAllBytes());
-
-	}
+//	@PostMapping("{customerId}/policies/installments/{installmentId}/pay")
+//	@PreAuthorize("hasRole('CUSTOMER')")
+//	public ResponseEntity<byte[]> payInstallment(@PathVariable Long customerId, @PathVariable Long installmentId,
+//			@RequestBody InstallmentPaymentRequestDto paymentRequest) throws DocumentException, IOException {
+//
+//		paymentRequest.setInstallmentId(installmentId);
+//		paymentRequest.setCustomerId(customerId);
+//
+//		long receiptStream = installmentService.processInstallmentPayment(paymentRequest);
+//
+//		HttpHeaders headers = new HttpHeaders();
+//		headers.add("Content-Disposition", "inline; filename=InstallmentReceipt.pdf");
+//
+//		return ResponseEntity.ok().headers(headers).contentType(MediaType.APPLICATION_PDF)
+//				.body(receiptStream.readAllBytes());
+//
+//	}
+//	
 	@GetMapping("/details")
 	@PreAuthorize("hasRole('CUSTOMER')")
 	public ResponseEntity<Map<String, Object>> getCurrentCustomerDetails() {
@@ -286,9 +306,12 @@ public class CustomerController {
 	    
 	    return ResponseEntity.ok(schemes);
 	}
+	
+
+	
 	@GetMapping("/schemes/{schemeId}")
 	@PreAuthorize("hasRole('CUSTOMER')")
-	public ResponseEntity<byte[]> getDocumentContent(@PathVariable long schemeId) {
+	public ResponseEntity<byte[]> getschemeContent(@PathVariable long schemeId) {
 	    InsuranceScheme scheme = insuranceManagementService.getSchemeImageById(schemeId);
 	    byte[] content = ImageUtil.decompressFile(scheme.getSchemeImage()); 
 
@@ -296,6 +319,77 @@ public class CustomerController {
                 .header(HttpHeaders.CONTENT_TYPE, "image/jpeg")
                 .body(content);
 	}
+	@PreAuthorize("hasRole('CUSTOMER')")
+    @GetMapping("/age")
+    public ResponseEntity<Integer> getCustomerAge() {
+        String username = getCurrentUserEmail();
+        int age = customerManagementService.calculateCustomerAgeByUser(username);
+
+        return ResponseEntity.ok(age);
+    }
 
 	
+	@GetMapping("installments/receipt/{installmentId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<byte[]> generateReceipt(@PathVariable Long installmentId) throws IOException {
+        try {
+            Installment installment = installmentService.findInstallmentById(installmentId);
+            Payment payment = installmentService.getPaymentByInstallment(installment);
+            PolicyAccount policyAccount = installment.getInsurancePolicy();
+
+            ByteArrayInputStream pdfStream = generateReceiptService.generateReceipt(installment, payment, policyAccount);
+
+            // Set response headers for the PDF
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Content-Disposition", "inline; filename=receipt.pdf");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdfStream.readAllBytes());
+
+        } catch (DocumentException e) {
+            return ResponseEntity.status(500).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(404).body(null);
+        }
+    }
+    
+    @GetMapping("/{customerId}/documents")
+	@PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<PagedResponse<DocumentResponseDto>> getAllDocumentsOfCustomer(@PathVariable(name = "customerId") long customerId,@RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "sortBy", defaultValue = "documentId") String sortBy,
+            @RequestParam(name = "direction", defaultValue = "asc") String direction,
+            @RequestParam(name = "verified", required = false) Boolean verified){
+    	PagedResponse<DocumentResponseDto> response = documentService.getAllDocuments(customerId,page, size, sortBy, direction, verified);
+        return ResponseEntity.ok(response);
+    	
+    }
+    
+    @GetMapping("documents/{documentId}/download")
+	@PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<byte[]> downloadDocument(@PathVariable(name = "documentId") int documentId){
+    	Document document = documentService.getDocumentById(documentId);
+	    byte[] content = ImageUtil.decompressFile(document.getContent()); 
+
+	    return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, "image/jpeg")
+                .body(content);
+    }
+    
+    @PutMapping("documents")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<String> updateDocument(@RequestParam(name = "document") MultipartFile multipartFile, @RequestBody DocumentRequestDto documentRequestDto) throws IOException{
+    	documentRequestDto.setDocument(multipartFile.getBytes());
+    	return new ResponseEntity<String>(documentService.updateDocument(documentRequestDto),HttpStatus.OK);
+    }
+	
+    @GetMapping("documents/types")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<List<DocumentType>> getDocumentTypes () {
+    	List<DocumentType> documentTypes = Arrays.asList(DocumentType.values());
+        return ResponseEntity.ok(documentTypes);
+    }
+    
 }

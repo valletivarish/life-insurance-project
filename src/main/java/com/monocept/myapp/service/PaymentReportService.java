@@ -66,13 +66,13 @@ public class PaymentReportService {
         paymentTable.setSpacingAfter(10f);
         paymentTable.setWidths(new int[]{10, 20, 20, 20, 20});
 
-        addTableHeader(paymentTable, "Payment ID", "Amount", "Customer ID", "Status", "Payment Date");
+        addTableHeader(paymentTable, "Payment ID", "Amount", "Policy No", "Status", "Payment Date");
 
         for (PaymentResponseDto payment : payments) {
             addRow(paymentTable,
                     String.valueOf(payment.getPaymentId()),
                     String.valueOf(payment.getAmount()),
-                    String.valueOf(payment.getCustomerId()),
+                    String.valueOf(payment.getPolicyNo()),
                     payment.getStatus().toString(),
                     payment.getPaymentDate().toString());
         }

@@ -3,6 +3,8 @@ package com.monocept.myapp.dto;
 import java.time.LocalDate;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
@@ -47,13 +49,14 @@ public class CustomerRequestDto {
     @Size(max = 50, message = "Apartment name must be less than 50 characters.")
     private String apartment;
 
-    @NotNull(message = "Pincode is required.")
-    @Size(min = 6, message = "Pincode must be 6 digits.")
+    @Min(value = 100000, message = "Pincode must be at least 6 digits.")
+    @Max(value = 999999, message = "Pincode must be at most 6 digits.")
     private int pincode;
 
+
     @NotNull(message = "State ID is required.")
-    private long stateId;
+    private Long stateId;
 
     @NotNull(message = "City ID is required.")
-    private long cityId;
+    private Long cityId;
 }

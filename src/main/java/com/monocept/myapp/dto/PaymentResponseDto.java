@@ -10,7 +10,7 @@ import lombok.Data;
 public class PaymentResponseDto {
     private Long paymentId;
     private Double amount;
-    private long customerId;
+    private long policyNo;
     private PaymentStatus status;
     private LocalDate paymentDate;
 }

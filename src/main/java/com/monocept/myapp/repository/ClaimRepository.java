@@ -26,6 +26,9 @@ public interface ClaimRepository extends JpaRepository<Claim, Long> {
 		                               @Param("customerId") Long customerId,
 		                               @Param("policyNo") Long policyNo,
 		                               Pageable pageable);
+	
+	@Query("SELECT c FROM Claim c WHERE c.policyAccount.agent.agentId = :agentId")
+    Page<Claim> findClaimsByAgentId(long agentId, Pageable pageable);
 
 
 	

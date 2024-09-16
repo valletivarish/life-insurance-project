@@ -9,10 +9,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.monocept.myapp.dto.DocumentRequestDto;
 import com.monocept.myapp.dto.DocumentResponseDto;
+import com.monocept.myapp.entity.Customer;
 import com.monocept.myapp.entity.Document;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException.ResourceNotFoundException;
+import com.monocept.myapp.repository.CustomerRepository;
 import com.monocept.myapp.repository.DocumentRepository;
+import com.monocept.myapp.util.ImageUtil;
 import com.monocept.myapp.util.PagedResponse;
 
 @Service
@@ -20,6 +25,9 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Autowired
     private DocumentRepository documentRepository;
+    
+    @Autowired
+    private CustomerRepository customerRepository;
 
     @Override
     public PagedResponse<DocumentResponseDto> getAllDocuments(int page, int size, String sortBy, String direction, Boolean verified) {
@@ -60,4 +68,38 @@ public class DocumentServiceImpl implements DocumentService {
         return documentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found with id: " + documentId));
     }
+
+	@Override
+	public PagedResponse<DocumentResponseDto> getAllDocuments(long customerId, int page, int size, String sortBy,
+			String direction, Boolean verified) {
+		Sort sort = direction.equalsIgnoreCase(Sort.Direction.DESC.name()) ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+        PageRequest pageRequest = PageRequest.of(page, size, sort);
+
+        Page<Document> documentsPage;
+        Customer customer = customerRepository.findById(customerId).orElseThrow(()->new GuardianLifeAssuranceException.UserNotFoundException("Customer Not found"));
+        
+        if (verified != null) {
+            documentsPage = documentRepository.findAllByCustomerAndVerified(customer,verified, pageRequest);
+        } else {
+            documentsPage = documentRepository.findAll(pageRequest);  
+        }
+
+        List<DocumentResponseDto> documents = documentsPage.getContent().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+
+        return new PagedResponse<>(documents, documentsPage.getNumber(), documentsPage.getSize(),
+                documentsPage.getTotalElements(), documentsPage.getTotalPages(), documentsPage.isLast());
+	}
+
+	@Override
+	public String updateDocument(DocumentRequestDto documentRequestDto) {
+		Document document = documentRepository.findById(documentRequestDto.getDocumentId()).orElseThrow(()->new GuardianLifeAssuranceException.ResourceNotFoundException("Document Not found"));
+		document.setContent(ImageUtil.compressFile(documentRequestDto.getDocument()));
+		document.setVerifyBy(null);
+		document.setVerified(false);
+		documentRepository.save(document);
+		return "Document updated Successfully";
+	}
 }

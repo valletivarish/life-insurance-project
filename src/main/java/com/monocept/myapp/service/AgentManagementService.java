@@ -2,6 +2,7 @@ package com.monocept.myapp.service;
 
 import com.monocept.myapp.dto.AgentRequestDto;
 import com.monocept.myapp.dto.AgentResponseDto;
+import com.monocept.myapp.dto.ReferralEmailRequestDto;
 import com.monocept.myapp.util.PagedResponse;
 
 public interface AgentManagementService {
@@ -15,6 +16,10 @@ public interface AgentManagementService {
 	String deleteAgent(long id);
 
 	AgentResponseDto getAgentById(long agentId);
+
+	AgentResponseDto getAgentProfile();
+
+	String sendRecommendationEmail(ReferralEmailRequestDto referralEmailRequestDto);
 
 
 	
