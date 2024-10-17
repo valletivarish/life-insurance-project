@@ -6,7 +6,8 @@ import lombok.Data;
 
 @Data
 public class PolicyAccountRequestDto {
-	private String stripeToken; 
+	
+	private String stripeToken;
 	private Long insuranceSchemeId;
 	private Long agentId;
 	private PremiumType premiumType;

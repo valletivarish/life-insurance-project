@@ -11,7 +11,7 @@ public class TaxSettingRequestDto {
 
     @NotNull(message = "Tax percentage is required.")
     @Min(value = 0, message = "Tax percentage must be a positive number.")
-    private double taxPercentage;
+    private Double taxPercentage;
 
     private LocalDateTime updatedAt = LocalDateTime.now();
 }

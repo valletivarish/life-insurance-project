@@ -1,6 +1,6 @@
 package com.monocept.myapp.dto;
 
-import java.sql.Date;
+import java.time.LocalDate;
 
 import lombok.Data;
 
@@ -8,6 +8,8 @@ import lombok.Data;
 public class CommissionResponseDto {
     private long commissionId;
     private String commissionType; 
-    private Date issueDate;
+    private LocalDate issueDate;
     private double amount;
+    private long agentId;   
+    private String agentName;
 }

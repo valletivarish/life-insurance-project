@@ -2,6 +2,7 @@ package com.monocept.myapp.service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -10,6 +11,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +24,7 @@ import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.User;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException.UserAlreadyDeactivatedException;
 import com.monocept.myapp.repository.AdminRepository;
 import com.monocept.myapp.repository.RoleRepository;
 import com.monocept.myapp.repository.UserRepository;
@@ -65,7 +70,7 @@ public class AdminServiceImpl implements AdminService {
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 						"Sorry, we couldn't find an admin with ID: " + adminId));
 		if (!admin.isActive()) {
-			throw new GuardianLifeAssuranceException.UserAlreadyDeActivatedException(
+			throw new UserAlreadyDeactivatedException(
 					"admin with ID " + adminId + " is already deactivated.");
 		}
 		admin.setActive(false);
@@ -112,7 +117,7 @@ public class AdminServiceImpl implements AdminService {
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 						"Sorry, we couldn't find an admin with ID: " + adminId));
 		if(!admin.isActive()) {
-			throw new GuardianLifeAssuranceException.UserAlreadyDeActivatedException("The admin "+adminId+" is already Deactivated ");
+			throw new UserAlreadyDeactivatedException("The admin "+adminId+" is already Deactivated ");
 		}
 		admin.setActive(false);
 		return "Admin Deleted Successfully with "+adminId+".";
@@ -142,5 +147,20 @@ public class AdminServiceImpl implements AdminService {
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 						"Sorry, we couldn't find an admin with ID: " + adminId));
 		return convertAdminToAdminResponseDto(admin);
+	}
+
+	@Override
+	public AdminResponseDto getAdminByUsername() {
+		User user = userRepository.findByUsernameOrEmail(getUserNameOrEmailFromSecurityContext(), getUserNameOrEmailFromSecurityContext()).orElseThrow(()->new GuardianLifeAssuranceException.UserNotFoundException("User not found"));
+		return convertAdminToAdminResponseDto(adminRepository.findByUser(user));
+	}
+	
+	private String getUserNameOrEmailFromSecurityContext() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+			UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+			return userDetails.getUsername();
+		}
+		return null;
 	}
 }

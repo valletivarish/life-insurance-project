@@ -8,14 +8,18 @@ public interface EmployeeManagementService {
 
 	String createEmployee(EmployeeRequestDto employeeRequestDto);
 
-	PagedResponse<EmployeeResponseDto> getAllEmployees(int page, int size, String sortBy, String direction);
+	PagedResponse<EmployeeResponseDto> getAllEmployees(int page, int size, String sortBy, String direction, String name, Boolean isActive);
 
-	EmployeeResponseDto updateEmployee(EmployeeRequestDto employeeRequestDto);
+	String updateEmployee(EmployeeRequestDto employeeRequestDto);
 
 	String deactivateEmployee(long employeeId);
 
 	EmployeeResponseDto getemployeesIdById(long employeesId);
 
-	String verifyDocument(int documentId, long employeeId);
+	String verifyDocument(int documentId);
+
+	String rejectDocument(int documentId);
+
+	EmployeeResponseDto getEmployeeProfile();
 
 }

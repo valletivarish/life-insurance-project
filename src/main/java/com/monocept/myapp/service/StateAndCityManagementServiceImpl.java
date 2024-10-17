@@ -18,6 +18,7 @@ import com.monocept.myapp.entity.City;
 import com.monocept.myapp.entity.State;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException.ResourceAlreadyDeactivatedException;
 import com.monocept.myapp.repository.CityRepository;
 import com.monocept.myapp.repository.StateRepository;
 import com.monocept.myapp.util.PagedResponse;
@@ -84,7 +85,7 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
 						"Sorry, we couldn't find a state with ID: " + id));
 		if (!existingState.isActive()) {
-			throw new GuardianLifeAssuranceException.ResourceAlreadyDeactivedException(
+			throw new ResourceAlreadyDeactivatedException(
 					"State '" + existingState.getName() + "' is already deactivated.");
 		}
 		existingState.setActive(false);
@@ -215,21 +216,9 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 	}
 
 	@Override
-	public String activateCityById(long stateId, long cityId) {
-	    State state = stateRepository.findById(stateId)
-	            .orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
-	                    "Sorry, we couldn't find a state with ID: " + stateId));
+	public String activateCityById(long cityId) {
+		City city = cityRepository.findById(cityId).orElseThrow();
 
-	    if (!state.isActive()) {
-	        throw new GuardianLifeAssuranceApiException(HttpStatus.CONFLICT, 
-	                "State '" + state.getName() + "' is not active. Activate the state before activating cities.");
-	    }
-
-	    City city = state.getCity().stream()
-	            .filter(c -> c.getCityId() == cityId)
-	            .findFirst()
-	            .orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
-	                    "Sorry, we couldn't find a city with ID: " + cityId + " in state with ID: " + stateId));
 
 	    if (city.isActive()) {
 	        throw new GuardianLifeAssuranceApiException(HttpStatus.CONFLICT, 
@@ -241,6 +230,11 @@ public class StateAndCityManagementServiceImpl implements StateAndCityManagement
 	    cityRepository.save(city);
 
 	    return "City '" + city.getName() + "' has been successfully activated.";
+	}
+
+	@Override
+	public Long getCount() {
+		return stateRepository.count();
 	}
 
 

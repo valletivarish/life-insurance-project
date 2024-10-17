@@ -1,5 +1,7 @@
 package com.monocept.myapp.service;
 
+import java.util.Map;
+
 import com.monocept.myapp.dto.ChangePasswordRequestDto;
 import com.monocept.myapp.dto.JwtResponse;
 import com.monocept.myapp.dto.LoginDto;
@@ -11,4 +13,6 @@ public interface AuthService {
     String register(RegisterDto registerDto);
 
 	String changePassword(ChangePasswordRequestDto changePasswordRequestDto);
+
+	Map<String, Object> getUserByEmail(String currentUserEmail);
 }

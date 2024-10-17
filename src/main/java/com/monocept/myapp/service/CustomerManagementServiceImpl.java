@@ -3,10 +3,12 @@ package com.monocept.myapp.service;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -15,6 +17,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,19 +33,19 @@ import com.monocept.myapp.dto.PolicyAccountRequestDto;
 import com.monocept.myapp.dto.PolicyAccountResponseDto;
 import com.monocept.myapp.dto.QueryReplyDto;
 import com.monocept.myapp.dto.QueryResponseDto;
-import com.monocept.myapp.dto.StripeChargeDto;
 import com.monocept.myapp.entity.Address;
 import com.monocept.myapp.entity.Agent;
 import com.monocept.myapp.entity.City;
 import com.monocept.myapp.entity.Commission;
 import com.monocept.myapp.entity.Customer;
+import com.monocept.myapp.entity.CustomerQuery;
 import com.monocept.myapp.entity.Document;
+import com.monocept.myapp.entity.Employee;
 import com.monocept.myapp.entity.Installment;
 import com.monocept.myapp.entity.InsuranceScheme;
 import com.monocept.myapp.entity.InsuranceSetting;
 import com.monocept.myapp.entity.Payment;
 import com.monocept.myapp.entity.PolicyAccount;
-import com.monocept.myapp.entity.Query;
 import com.monocept.myapp.entity.Role;
 import com.monocept.myapp.entity.State;
 import com.monocept.myapp.entity.TaxSetting;
@@ -56,11 +61,13 @@ import com.monocept.myapp.enums.WithdrawalRequestStatus;
 import com.monocept.myapp.enums.WithdrawalRequestType;
 import com.monocept.myapp.exception.GuardianLifeAssuranceApiException;
 import com.monocept.myapp.exception.GuardianLifeAssuranceException;
+import com.monocept.myapp.exception.GuardianLifeAssuranceException.UserAlreadyDeactivatedException;
 import com.monocept.myapp.repository.AddressRepository;
 import com.monocept.myapp.repository.AgentRepository;
 import com.monocept.myapp.repository.CommissionRepository;
 import com.monocept.myapp.repository.CustomerRepository;
 import com.monocept.myapp.repository.DocumentRepository;
+import com.monocept.myapp.repository.EmployeeRepository;
 import com.monocept.myapp.repository.InstallmentRepository;
 import com.monocept.myapp.repository.InsuranceSchemeRepository;
 import com.monocept.myapp.repository.InsuranceSettingRepository;
@@ -111,9 +118,6 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 	private PolicyRepository policyRepository;
 
 	@Autowired
-	private StripeService stripeService;
-
-	@Autowired
 	private InstallmentRepository installmentRepository;
 	@Autowired
 	private TaxSettingRepository taxSettingRepository;
@@ -127,6 +131,9 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 
 	@Autowired
 	private WithdrawalRepository withdrawalRepository;
+
+	@Autowired
+	private EmployeeRepository employeeRepository;
 
 	@Override
 	public String createCustomer(CustomerRequestDto customerRequestDto) {
@@ -154,8 +161,9 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		roles.add(role);
 
 		user.setRoles(roles);
-		userRepository.save(user);
+
 		Address address = new Address();
+
 		State state = stateRepository.findById(customerRequestDto.getStateId()).orElse(null);
 		List<City> cities = state.getCity();
 		City city = cities.stream().filter(c -> c.getCityId() == customerRequestDto.getCityId()).findFirst()
@@ -165,25 +173,44 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		address.setPincode(customerRequestDto.getPincode());
 		address.setApartment(customerRequestDto.getApartment());
 
-		addressRepository.save(address);
 		customer.setActive(customerRequestDto.isActive());
 		customer.setAddress(address);
+		customer.setActive(true);
 		customer.setDateOfBirth(customerRequestDto.getDateOfBirth());
 		customer.setFirstName(customerRequestDto.getFirstName());
 		customer.setLastName(customerRequestDto.getLastName());
 		customer.setPhoneNumber(customerRequestDto.getPhoneNumber());
 		customer.setUser(user);
+		addressRepository.save(address);
+		userRepository.save(user);
 		return customerRepository.save(customer);
 	}
 
 	@Override
 	public String updateCustomer(CustomerRequestDto customerRequestDto) {
+		convertCustomerRequestDtoToCustomerAndUpdate(customerRequestDto);
+		return "The Customer with ID " + customerRequestDto.getCustomerId() + " has been successfully updated.";
+	}
+
+	private void convertCustomerRequestDtoToCustomerAndUpdate(CustomerRequestDto customerRequestDto) {
 		Customer customer = customerRepository.findById(customerRequestDto.getCustomerId())
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 						"Sorry, we couldn't find a customer with ID: " + customerRequestDto.getCustomerId()));
-		convertCustomerRequestDtoToCustomer(customerRequestDto, customer);
+		Address address = customer.getAddress();
+		State state = stateRepository.findById(customerRequestDto.getStateId()).orElse(null);
+		List<City> cities = state.getCity();
+		City city = cities.stream().filter(c -> c.getCityId() == customerRequestDto.getCityId()).findFirst()
+				.orElse(null);
+		address.setCity(city);
+		address.setHouseNo(customerRequestDto.getHouseNo());
+		address.setPincode(customerRequestDto.getPincode());
+		address.setApartment(customerRequestDto.getApartment());
+		customer.setDateOfBirth(customerRequestDto.getDateOfBirth());
+		customer.setFirstName(customerRequestDto.getFirstName());
+		customer.setLastName(customerRequestDto.getLastName());
+		customer.setPhoneNumber(customerRequestDto.getPhoneNumber());
+		addressRepository.save(address);
 		customerRepository.save(customer);
-		return "The Customer with ID " + customerRequestDto.getCustomerId() + " has been successfully updated.";
 	}
 
 	@Override
@@ -214,7 +241,7 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 						"Sorry, we couldn't find a customer with ID: " + customerId));
 		if (!customer.isActive()) {
-			throw new GuardianLifeAssuranceException.UserAlreadyDeActivatedException(
+			throw new UserAlreadyDeactivatedException(
 					"The customer with ID " + customerId + " is already deactivated.");
 		}
 		customer.setActive(false);
@@ -234,6 +261,7 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		customerResponseDto.setDateOfBirth(customer.getDateOfBirth());
 		customerResponseDto.setPhoneNumber(customer.getPhoneNumber());
 		customerResponseDto.setHouseNo(customer.getAddress().getHouseNo());
+		customerResponseDto.setPincode(customer.getAddress().getPincode());
 		customerResponseDto.setApartment(customer.getAddress().getApartment());
 		customerResponseDto.setState(customer.getAddress().getCity().getState().getName());
 		customerResponseDto.setCity(customer.getAddress().getCity().getName());
@@ -245,28 +273,50 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 
 	@Override
 	public String uploadDocument(MultipartFile file, DocumentType documentName, long customerId) throws IOException {
-		Customer customer = customerRepository.findById(customerId)
-				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
-						"Sorry, we couldn't find a customer with ID: " + customerId));
+	    Customer customer = customerRepository.findById(customerId)
+	            .orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
+	                    "Sorry, we couldn't find a customer with ID: " + customerId));
 
-		Document document = new Document();
-		document.setCustomer(customer);
-		document.setContent(ImageUtil.compressFile(file.getBytes()));
-		document.setDocumentName(documentName);
-		documentRepository.save(document);
-		return "Document '" + documentName + "' has been successfully uploaded for customer ID " + customerId + ".";
+	    Optional<Document> existingDocument = documentRepository.findByCustomerAndDocumentName(customer, documentName);
+
+	    if (existingDocument.isPresent()) {
+	        Document document = existingDocument.get();
+	        if (!document.isVerified()) {
+	            document.setContent(ImageUtil.compressFile(file.getBytes()));
+	            document.setVerifyBy(null); 
+	            document.setVerified(false); 
+	            documentRepository.save(document);
+	            return "Document '" + documentName + "' has been successfully updated for customer ID " + customerId + ".";
+	        } else {
+	            throw new GuardianLifeAssuranceException("Document '" + documentName + "' is already verified. Please contact support for further assistance.");
+	        }
+	    } else {
+	        // No existing document of this type, proceed with a new upload
+	        Document newDocument = new Document();
+	        newDocument.setCustomer(customer);
+	        newDocument.setContent(ImageUtil.compressFile(file.getBytes()));
+	        newDocument.setDocumentName(documentName);
+	        documentRepository.save(newDocument);
+	        return "Document '" + documentName + "' has been successfully uploaded for customer ID " + customerId + ".";
+	    }
 	}
+
 
 	@Override
 	public String createCustomerQuery(long customerId, CustomerSideQueryRequestDto customerSideQueryRequestDto) {
 		Customer customer = customerRepository.findById(customerId)
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 						"Sorry, we couldn't find a customer with ID: " + customerId));
-		Query query = new Query();
+
+		CustomerQuery query = new CustomerQuery();
 		query.setCustomer(customer);
 		query.setMessage(customerSideQueryRequestDto.getMessage());
 		query.setTitle(customerSideQueryRequestDto.getTitle());
-		queryRepository.save(query);
+
+		customer.getQueries().add(query);
+
+		customerRepository.save(customer);
+
 		return "Your query titled '" + customerSideQueryRequestDto.getTitle() + "' has been successfully submitted.";
 	}
 
@@ -275,7 +325,7 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		customerRepository.findById(customerId)
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 						"Sorry, we couldn't find a customer with ID: " + customerId));
-		Query existingQuery = queryRepository.findById(customerSideQueryRequestDto.getId())
+		CustomerQuery existingQuery = queryRepository.findById(customerSideQueryRequestDto.getId())
 				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
 						"Sorry, we couldn't find a query with ID: " + customerSideQueryRequestDto.getId()));
 		existingQuery.setMessage(customerSideQueryRequestDto.getMessage());
@@ -291,21 +341,27 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 				: Sort.by(sortBy).ascending();
 		PageRequest pageRequest = PageRequest.of(page, size, sort);
 		Customer customer = customerRepository.findById(customerId).orElseThrow();
-		Page<Query> queryPage = queryRepository.findByCustomer(customer, pageRequest);
+		Page<CustomerQuery> queryPage = queryRepository.findByCustomer(customer, pageRequest);
 		List<QueryResponseDto> queries = queryPage.getContent().stream()
 				.map(query -> convertQueryToQueryResponseDto(query)).collect(Collectors.toList());
 		return new PagedResponse<QueryResponseDto>(queries, queryPage.getNumber(), queryPage.getSize(),
 				queryPage.getTotalElements(), queryPage.getTotalPages(), queryPage.isLast());
 	}
 
-	private QueryResponseDto convertQueryToQueryResponseDto(Query query) {
+	private QueryResponseDto convertQueryToQueryResponseDto(CustomerQuery query) {
 		QueryResponseDto queryResponseDto = new QueryResponseDto();
-		queryResponseDto.setCustomerId(query.getQueryId());
+		queryResponseDto.setQueryId(query.getQueryId());
+		queryResponseDto.setCustomerId(query.getCustomer().getCustomerId());
 		queryResponseDto.setCustomerName(query.getCustomer().getFirstName() + " " + query.getCustomer().getLastName());
 		queryResponseDto.setMessage(query.getMessage());
 		queryResponseDto.setResolved(query.isResolved());
 		queryResponseDto.setTitle(query.getTitle());
-		queryResponseDto.setResponse(query.getResponse());
+		if (query.getResolvedBy() != null) {
+			queryResponseDto
+					.setResolvedBy(query.getResolvedBy().getFirstName() + " " + query.getResolvedBy().getLastName());
+		}
+		queryResponseDto.setResolvedAt(query.getResolvedAt().toLocalDate());
+		queryResponseDto.setResponse(query.getResponse() != null ? query.getResponse() : "");
 		return queryResponseDto;
 	}
 
@@ -314,23 +370,38 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		Customer customer = customerRepository.findById(customerId)
 				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
 						"Sorry, we couldn't find a customer with ID: " + customerId));
-		boolean removed = customer.getQueries().removeIf(query -> query.getQueryId() == queryId);
-		if (!removed) {
-			throw new GuardianLifeAssuranceException.ResourceNotFoundException(
-					"Sorry, we couldn't find a query with ID: " + queryId + " for customer ID: " + customerId);
-		}
+
+		CustomerQuery queryToDelete = customer.getQueries().stream().filter(query -> query.getQueryId() == queryId)
+				.findFirst().orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
+						"Customer doesn't have the following query with id " + queryId));
+
+		customer.getQueries().remove(queryToDelete);
 		customerRepository.save(customer);
+
 		return "Query with ID " + queryId + " has been successfully deleted for customer ID " + customerId + ".";
 	}
 
 	@Override
 	public String respondToQuery(long queryId, QueryReplyDto queryReplyDto) {
-		Query query = queryRepository.findById(queryId)
+		CustomerQuery query = queryRepository.findById(queryId)
 				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
 						"Sorry, we couldn't find a query with ID: " + queryId));
 		query.setResolved(true);
+		User user = userRepository.findByEmail(getEmailFromSecurityContext()).orElse(null);
+		Employee employee = employeeRepository.findByUser(user);
+		query.setResolvedBy(employee);
 		query.setResponse(queryReplyDto.getResponse());
+		queryRepository.save(query);
 		return "Response to query ID " + queryId + " has been successfully recorded.";
+	}
+
+	private String getEmailFromSecurityContext() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+			UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+			return userDetails.getUsername();
+		}
+		return null;
 	}
 
 	@Override
@@ -338,7 +409,7 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		Sort sort = direction.equalsIgnoreCase(Sort.Direction.DESC.name()) ? Sort.by(sortBy).descending()
 				: Sort.by(sortBy).ascending();
 		PageRequest pageRequest = PageRequest.of(page, size, sort);
-		Page<Query> queryPage = queryRepository.findAllByResolvedFalse(pageRequest);
+		Page<CustomerQuery> queryPage = queryRepository.findAll(pageRequest);
 		List<QueryResponseDto> queryDtos = queryPage.getContent().stream()
 				.map(query -> convertQueryToQueryResponseDto(query)).collect(Collectors.toList());
 		return new PagedResponse<>(queryDtos, queryPage.getNumber(), queryPage.getSize(), queryPage.getTotalElements(),
@@ -358,25 +429,21 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
 						"Sorry, we couldn't find a scheme with ID: " + accountRequestDto.getInsuranceSchemeId()));
 
-		verifyDocuments(insuranceScheme.getRequiredDocuments(), customer.getDocuments());
+		verifyDocuments(insuranceScheme.getRequiredDocuments(), customer.getCustomerId());
 
 		long months = calculateMonths(accountRequestDto.getPremiumType());
 		double installmentAmount = calculateInstallmentAmount(accountRequestDto.getPremiumAmount(),
 				accountRequestDto.getPolicyTerm(), taxSetting, months);
 
-		StripeChargeDto paymentResponse = processPayment(accountRequestDto.getStripeToken(), installmentAmount,
-				customer);
-		customer.setStripeToken(accountRequestDto.getStripeToken());
-
 		PolicyAccount policyAccount = createPolicyAccount(accountRequestDto, customer, insuranceScheme, taxSetting,
 				insuranceSetting, installmentAmount);
 
-		if (accountRequestDto.getAgentId() != 0) {
+		if (accountRequestDto.getAgentId() != null && accountRequestDto.getAgentId()!=0) {
 			handleAgentCommission(accountRequestDto.getAgentId(), insuranceScheme, policyAccount);
 		}
 
-		handlePaymentsAndInstallments(policyAccount, paymentResponse, installmentAmount, months,
-				accountRequestDto.getPolicyTerm());
+		handlePaymentsAndInstallments(policyAccount, installmentAmount, months, accountRequestDto.getPolicyTerm(),
+				accountRequestDto.getStripeToken());
 
 		savePolicyToCustomer(policyAccount, customer);
 
@@ -418,10 +485,12 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		customerRepository.save(customer);
 	}
 
-	private void verifyDocuments(List<DocumentType> requiredDocuments, List<Document> customerDocuments) {
+	private void verifyDocuments(List<DocumentType> requiredDocuments, Long customerId) {
+		List<Document> verifiedDocuments = documentRepository.findVerifiedDocumentsByCustomerId(customerId);
+
 		for (DocumentType requiredDoc : requiredDocuments) {
-			boolean hasRequiredDoc = customerDocuments.stream().anyMatch(
-					doc -> requiredDoc.name().equalsIgnoreCase(doc.getDocumentName().name()) && doc.isVerified());
+			boolean hasRequiredDoc = verifiedDocuments.stream()
+					.anyMatch(doc -> requiredDoc.name().equalsIgnoreCase(doc.getDocumentName().name()));
 
 			if (!hasRequiredDoc) {
 				throw new GuardianLifeAssuranceException.DocumentNotVerifiedException(
@@ -449,21 +518,6 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		return (premiumAmount / totalMonths) * (taxSetting.getTaxPercentage() / 100) + (premiumAmount / totalMonths);
 	}
 
-	private StripeChargeDto processPayment(String stripeToken, double installmentAmount, Customer customer) {
-		StripeChargeDto chargeDto = new StripeChargeDto();
-		chargeDto.setStripeToken(stripeToken);
-		chargeDto.setAmount(installmentAmount);
-		chargeDto.setUsername(customer.getFirstName() + " " + customer.getLastName());
-
-		StripeChargeDto paymentResponse = stripeService.chargeAndCreatePolicy(chargeDto,
-				customer.getFirstName() + " " + customer.getLastName(), customer.getUser().getEmail());
-
-		if (!paymentResponse.getSuccess()) {
-			throw new RuntimeException("Payment failed for the first installment");
-		}
-
-		return paymentResponse;
-	}
 
 	private PolicyAccount createPolicyAccount(PolicyAccountRequestDto accountRequestDto, Customer customer,
 			InsuranceScheme insuranceScheme, TaxSetting taxSetting, InsuranceSetting insuranceSetting,
@@ -485,13 +539,14 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		return policyRepository.save(policyAccount);
 	}
 
-	private void handlePaymentsAndInstallments(PolicyAccount policyAccount, StripeChargeDto paymentResponse,
-			double installmentAmount, long months, long policyTerm) {
+	private void handlePaymentsAndInstallments(PolicyAccount policyAccount, double installmentAmount, long months,
+			long policyTerm, String chargeId) {
 		Payment payment = new Payment();
 		payment.setAmount(installmentAmount);
-		payment.setChargeId(paymentResponse.getChargeId());
+		payment.setChargeId(chargeId);
 		payment.setCustomerId(policyAccount.getCustomer().getCustomerId());
 		payment.setStatus(PaymentStatus.PAID);
+		payment.setPolicyAccount(policyAccount);
 
 		List<Payment> payments = policyAccount.getPayments();
 		if (payments == null) {
@@ -508,6 +563,7 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		firstInstallment.setAmountDue(installmentAmount);
 		firstInstallment.setAmountPaid(installmentAmount);
 		firstInstallment.setPaymentDate(startDate);
+		firstInstallment.setPaymentReference(chargeId);
 		firstInstallment.setStatus(InstallmentStatus.PAID);
 		installmentRepository.save(firstInstallment);
 
@@ -552,6 +608,7 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		policyDto.setEmail(customer.getUser().getEmail());
 		policyDto.setPhoneNumber(customer.getPhoneNumber());
 		policyDto.setPolicyNo(policy.getPolicyNo());
+		policyDto.setPolicyStatus(policy.getStatus());
 
 		if (policy.getInsuranceScheme().getInsurancePlan() != null) {
 			policyDto.setInsurancePlan(policy.getInsuranceScheme().getInsurancePlan().getPlanName());
@@ -581,6 +638,7 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		installmentDto.setInstallmentId(installment.getInstallmentId());
 		installmentDto.setDueDate(installment.getDueDate());
 		installmentDto.setAmountDue(installment.getAmountDue());
+		installmentDto.setPaymentDate(installment.getPaymentDate());
 		installmentDto.setAmountPaid(installment.getAmountPaid());
 		installmentDto.setStatus(installment.getStatus());
 		return installmentDto;
@@ -591,7 +649,7 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		paymentDto.setPaymentId(payment.getPaymentId());
 		paymentDto.setAmount(payment.getAmount());
 		paymentDto.setStatus(payment.getStatus());
-		paymentDto.setPaymentDate(payment.getPaymentDate());
+		paymentDto.setPaymentDate(payment.getPaymentDate().toLocalDate());
 		return paymentDto;
 	}
 
@@ -656,13 +714,6 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 		withdrawalRepository.save(withdrawalRequest);
 	}
 
-//	private String getLatestStripeChargeId(PolicyAccount policyAccount) {
-//		return policyAccount.getPayments().stream().sorted(Comparator.comparing(Payment::getPaymentDate).reversed())
-//				.map(Payment::getChargeId).findFirst()
-//				.orElseThrow(() -> new GuardianLifeAssuranceException.ResourceNotFoundException(
-//						"No payment record found for this policy."));
-//	}
-
 	private double calculateProratedRefund(PolicyAccount policyAccount) {
 		long totalMonths = policyAccount.getPolicyTerm() * 12;
 		long usedMonths = ChronoUnit.MONTHS.between(policyAccount.getIssueDate(), LocalDate.now());
@@ -684,6 +735,89 @@ public class CustomerManagementServiceImpl implements CustomerManagementService 
 
 		return new PagedResponse<>(customers, customerPage.getNumber(), customerPage.getSize(),
 				customerPage.getTotalElements(), customerPage.getTotalPages(), customerPage.isLast());
+	}
+
+	@Override
+	public String activateCustomer(long customerId) {
+		Customer customer = customerRepository.findById(customerId)
+				.orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException(
+						"Sorry, we couldn't find a customer with ID: " + customerId));
+		if (customer.isActive()) {
+			throw new UserAlreadyDeactivatedException("The customer with ID " + customerId + " is already activated.");
+		}
+		customer.setActive(true);
+		customerRepository.save(customer);
+		return "The customer with ID " + customerId + " has been successfully activated.";
+	}
+
+	@Override
+	public PagedResponse<PolicyAccountResponseDto> getAllPolicies(int page, int size, String sortBy, String direction) {
+		Sort sort = direction.equalsIgnoreCase(Sort.Direction.DESC.name()) ? Sort.by(sortBy).descending()
+				: Sort.by(sortBy).ascending();
+		PageRequest pageRequest = PageRequest.of(page, size, sort);
+		Page<PolicyAccount> policyAccountPage = policyRepository.findAll(pageRequest);
+		System.out.println(policyAccountPage);
+		List<PolicyAccountResponseDto> policies = policyAccountPage.getContent().stream()
+				.map(policy -> convertPolicyToPolicyResponseDto(policy)).collect(Collectors.toList());
+		System.out.println(policies);
+		return new PagedResponse<>(policies, policyAccountPage.getNumber(), policyAccountPage.getSize(),
+				policyAccountPage.getTotalElements(), policyAccountPage.getTotalPages(), policyAccountPage.isLast());
+	}
+
+	public PagedResponse<QueryResponseDto> getAllQueries(int page, int size, String sortBy, String direction,
+			String search, Boolean resolved) {
+		PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(direction), sortBy));
+
+		// Example search specification or query logic
+		Page<CustomerQuery> queryPage = queryRepository.findAllByCriteria(search, resolved, pageable);
+
+		List<QueryResponseDto> queries = queryPage.getContent().stream()
+				.map(query -> convertQueryToQueryResponseDto(query)).collect(Collectors.toList());
+
+		return new PagedResponse<>(queries, queryPage.getNumber(), queryPage.getSize(), queryPage.getTotalElements(),
+				queryPage.getTotalPages(), queryPage.isLast());
+	}
+
+	@Override
+	public int calculateCustomerAgeByUser(String username) {
+		User user = userRepository.findByUsernameOrEmail(username, username).orElse(null);
+		Customer customer = customerRepository.findByUser(user);
+		LocalDate dateOfBirth = customer.getDateOfBirth();
+		return calculateAge(dateOfBirth);
+	}
+
+	private int calculateAge(LocalDate dob) {
+		return Period.between(dob, LocalDate.now()).getYears();
+	}
+
+	@Override
+	public PagedResponse<CustomerResponseDto> getAllCustomersByAgentWithFilters(int page, int size, String sortBy,
+			String direction, String name, String city, String state, Boolean isActive) {
+		Sort sort = direction.equalsIgnoreCase(Sort.Direction.DESC.name()) ? Sort.by(sortBy).descending()
+				: Sort.by(sortBy).ascending();
+		PageRequest pageRequest = PageRequest.of(page, size, sort);
+
+		Page<Customer> customerPage = customerRepository.findByAgentFilters(getAgentFromSecurityContext().getAgentId(), name, city, state, isActive, pageRequest);
+		List<CustomerResponseDto> customers = customerPage.getContent().stream()
+				.map(this::convertCustomerToCustomerResponseDto).collect(Collectors.toList());
+
+		return new PagedResponse<>(customers, customerPage.getNumber(), customerPage.getSize(),
+				customerPage.getTotalElements(), customerPage.getTotalPages(), customerPage.isLast());
+	}
+	
+	private Agent getAgentFromSecurityContext() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+			UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+			
+			return agentRepository.findByUser(
+				    userRepository.findByUsernameOrEmail(
+				        userDetails.getUsername(), 
+				        userDetails.getUsername()
+				    ).orElseThrow(() -> new GuardianLifeAssuranceException.UserNotFoundException("User not found"))
+				);
+		}
+		throw new GuardianLifeAssuranceException.UserNotFoundException("agent not found");
 	}
 
 }

@@ -1,6 +1,6 @@
 package com.monocept.myapp.entity;
 
-import java.sql.Date;
+import java.time.LocalDate;
 
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -32,7 +32,7 @@ public class Commission {
 
     @Column(name = "issueDate")
     @CreationTimestamp
-    private Date issueDate;
+    private LocalDate issueDate;
 
     @Column(name = "amount")
     private double amount;
